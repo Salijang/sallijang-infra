@@ -15,7 +15,7 @@ resource "aws_db_instance" "main" {
   identifier = "${local.name_prefix}-rds"
 
   engine         = "postgres"
-  engine_version = "16.3"
+  engine_version = "16"
   instance_class = var.instance_class
 
   allocated_storage = var.allocated_storage
@@ -33,6 +33,10 @@ resource "aws_db_instance" "main" {
   multi_az            = false
   skip_final_snapshot = true
   deletion_protection = false
+
+  lifecycle {
+    ignore_changes = [engine_version]
+  }
 
   tags = { Name = "${local.name_prefix}-rds" }
 }
