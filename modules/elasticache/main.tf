@@ -1,5 +1,6 @@
 locals {
-  name_prefix = "${var.project_name}-${var.environment}"
+  name_prefix     = "${var.project_name}-${var.environment}"
+  enable_multi_az = var.num_cache_clusters > 1
 }
 
 # ── Subnet Group ──────────────────────────────────────────────────────
@@ -29,9 +30,9 @@ resource "aws_elasticache_replication_group" "main" {
   subnet_group_name  = aws_elasticache_subnet_group.main.name
   security_group_ids = [var.redis_sg_id]
 
-  # Multi-AZ + 자동 장애 조치
-  automatic_failover_enabled = true
-  multi_az_enabled           = true
+  # Multi-AZ + 자동 장애 조치 (클러스터 2개 이상일 때만 활성화)
+  automatic_failover_enabled = local.enable_multi_az
+  multi_az_enabled           = local.enable_multi_az
 
   # 보안
   at_rest_encryption_enabled = true
