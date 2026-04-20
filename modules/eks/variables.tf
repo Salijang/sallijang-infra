@@ -67,3 +67,14 @@ variable "node_volume_size" {
   description = "워커 노드 루트 볼륨 크기 (GB)"
   default     = 50
 }
+
+variable "node_ami_id" {
+  type        = string
+  description = "EKS 최적화 AMI ID (Amazon Linux 2). AWS 콘솔 또는 아래 명령으로 조회: aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amazon-eks-node-<version>-v*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text"
+}
+
+variable "target_group_arns" {
+  type        = list(string)
+  description = "ASG에 연결할 ALB 타겟 그룹 ARN 목록"
+  default     = []
+}

@@ -15,9 +15,8 @@ resource "aws_sns_topic" "main" {
 }
 
 # ── SNS → SQS 구독 ────────────────────────────────────────────────────
-# sqs_endpoint_arn 이 지정된 경우에만 생성
 resource "aws_sns_topic_subscription" "sqs" {
-  count = var.sqs_endpoint_arn != "" ? 1 : 0
+  count = var.create_sqs_subscription ? 1 : 0
 
   topic_arn = aws_sns_topic.main.arn
   protocol  = "sqs"

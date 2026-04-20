@@ -32,16 +32,85 @@ module "rds" {
   project_name = var.project_name
   environment  = var.environment
 
-  # [중요] VPC 모듈이 만든 결과물(Output)을 RDS의 재료(Variable)로 꽂아줍니다.
+  vpc_id          = module.vpc.vpc_id
   data_subnet_ids = module.vpc.data_subnet_ids
+  eks_subnet_ids  = module.vpc.eks_subnet_ids
   rds_sg_id       = module.vpc.rds_sg_id
+  eks_sg_id       = module.vpc.eks_sg_id
 
-  # 멘토님 가이드: 최소 사양 (t3.small)
   instance_class    = "db.t3.small"
   allocated_storage = 20
 
-  # DB 접속 정보 (가급적 variables.tf에 정의해서 쓰세요)
   db_name     = "pickupdb"
   db_username = "adminuser"
-  db_password = "yourpassword123!" # 실제로는 보안상 주의!
+}
+
+module "eks" {
+  source = "../../modules/eks"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  vpc_id         = module.vpc.vpc_id
+  eks_subnet_ids = module.vpc.eks_subnet_ids
+  eks_sg_id      = module.vpc.eks_sg_id
+
+  node_ami_id       = var.eks_node_ami_id
+  target_group_arns = [module.alb.target_group_arn]
+}
+
+module "s3" {
+  source = "../../modules/s3"
+
+  project_name  = var.project_name
+  environment   = var.environment
+  force_destroy = true
+}
+
+module "sqs" {
+  source = "../../modules/sqs"
+
+  project_name = var.project_name
+  environment  = var.environment
+}
+
+module "sns" {
+  source = "../../modules/sns"
+
+  project_name     = var.project_name
+  environment      = var.environment
+  sqs_endpoint_arn = module.sqs.queue_arn
+}
+
+module "iam" {
+  source = "../../modules/iam"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_issuer_url   = module.eks.oidc_issuer_url
+
+  sqs_queue_arn    = module.sqs.queue_arn
+  sqs_dlq_arn      = module.sqs.dlq_arn
+  sns_topic_arn    = module.sns.topic_arn
+  image_bucket_arn = module.s3.image_bucket_arn
+
+  kubernetes_namespace = var.kubernetes_namespace
+}
+
+module "alb" {
+  source = "../../modules/alb"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  vpc_id            = module.vpc.vpc_id
+  public_subnet_ids = module.vpc.public_subnet_ids
+  alb_sg_id         = module.vpc.alb_sg_id
+
+  domain_name     = var.domain_name
+  hosted_zone_id  = var.hosted_zone_id
+  certificate_arn = var.certificate_arn
+  node_port       = var.node_port
 }

@@ -65,7 +65,7 @@ resource "aws_iam_instance_profile" "node" {
 # ── 보안 그룹: 컨트롤 플레인 추가 SG ──────────────────────────────────
 resource "aws_security_group" "control_plane" {
   name        = "${local.name_prefix}-sg-eks-cp"
-  description = "EKS Control Plane additional SG — 워커 노드와의 통신용"
+  description = "EKS Control Plane additional SG for worker node communication"
   vpc_id      = var.vpc_id
 
   tags = { Name = "${local.name_prefix}-sg-eks-cp" }
@@ -201,18 +201,12 @@ resource "aws_eks_access_entry" "node" {
   depends_on = [aws_eks_cluster.main]
 }
 
-# ── EKS 최적화 AMI (Amazon Linux 2) ──────────────────────────────────
-# SSM Parameter Store에서 클러스터 버전별 최신 AMI ID 자동 조회
-data "aws_ssm_parameter" "eks_ami" {
-  name = "/aws/service/eks/optimized-ami/${var.cluster_version}/amazon-linux-2/recommended/image_id"
-}
-
 # ── Launch Template ───────────────────────────────────────────────────
 resource "aws_launch_template" "node" {
   name_prefix = "${local.name_prefix}-eks-node-"
   description = "EKS Self-managed worker node launch template"
 
-  image_id      = data.aws_ssm_parameter.eks_ami.value
+  image_id      = var.node_ami_id
   instance_type = var.instance_type
 
   iam_instance_profile {
@@ -268,6 +262,8 @@ resource "aws_autoscaling_group" "node" {
 
   # 2개 AZ 서브넷 지정 — ASG가 AZ별로 균등 분배 (desired=2 → AZ당 1대, max=4 → AZ당 2대)
   vpc_zone_identifier = var.eks_subnet_ids
+
+  target_group_arns = var.target_group_arns
 
   launch_template {
     id      = aws_launch_template.node.id
