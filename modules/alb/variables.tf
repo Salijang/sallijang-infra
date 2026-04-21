@@ -43,3 +43,9 @@ variable "node_port" {
   description = "NodePort number on EKS worker nodes"
   default     = 30080
 }
+
+variable "route53_zone_name" {
+  type        = string
+  description = "Route53 hosted zone의 apex 도메인 (e.g. sallijang.shop). 입력 시 ALB alias A 레코드 자동 생성."
+  default     = ""
+}

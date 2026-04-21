@@ -1,11 +1,9 @@
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
 
-  # plan-time 확정값(변수)으로만 판단
-  enable_https = var.certificate_arn != ""
-
-  # ACM auto-create: cert ARN 없고 Route53도 있어야 의미 있음 (없으면 검증 불가)
+  enable_https       = var.certificate_arn != ""
   create_certificate = var.certificate_arn == "" && var.hosted_zone_id != ""
+  create_alias       = var.route53_zone_name != ""
 }
 
 # ── ACM Certificate (cert ARN 없고 Route53 있을 때만 자동 생성) ───────
@@ -216,4 +214,24 @@ resource "aws_lb_listener" "https" {
 resource "aws_wafv2_web_acl_association" "main" {
   resource_arn = aws_lb.main.arn
   web_acl_arn  = aws_wafv2_web_acl.main.arn
+}
+
+# ── Route53 Alias A Record (도메인 → ALB) ────────────────────────────
+data "aws_route53_zone" "main" {
+  count        = local.create_alias ? 1 : 0
+  name         = var.route53_zone_name
+  private_zone = false
+}
+
+resource "aws_route53_record" "alb_alias" {
+  count   = local.create_alias ? 1 : 0
+  zone_id = data.aws_route53_zone.main[0].zone_id
+  name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_lb.main.dns_name
+    zone_id                = aws_lb.main.zone_id
+    evaluate_target_health = true
+  }
 }

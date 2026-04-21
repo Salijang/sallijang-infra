@@ -4,6 +4,7 @@
 *.tfstate
 *.tfstate.backup
 *.tfplan
+terraform.tfvars
 terraform.tfvars.local
 override.tf
 override.tf.json
