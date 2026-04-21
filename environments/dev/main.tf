@@ -39,7 +39,7 @@ module "rds" {
   eks_sg_id       = module.vpc.eks_sg_id
 
   instance_class    = "db.t3.small"
-  allocated_storage = 20
+allocated_storage = 20
 
   db_name     = "pickupdb"
   db_username = "adminuser"
@@ -109,8 +109,9 @@ module "alb" {
   public_subnet_ids = module.vpc.public_subnet_ids
   alb_sg_id         = module.vpc.alb_sg_id
 
-  domain_name     = var.domain_name
-  hosted_zone_id  = var.hosted_zone_id
-  certificate_arn = var.certificate_arn
-  node_port       = var.node_port
+  domain_name       = var.domain_name
+  hosted_zone_id    = var.hosted_zone_id
+  certificate_arn   = var.certificate_arn
+  node_port         = var.node_port
+  route53_zone_name = var.route53_zone_name
 }

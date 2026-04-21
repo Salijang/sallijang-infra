@@ -9,7 +9,7 @@ resource "helm_release" "argocd" {
   version          = "7.7.0" 
 
   # 중요: 워커 노드(ASG)가 다 뜨고 나서 설치를 시작해야 합니다.
-  depends_on = [aws_autoscaling_group.node]
+  depends_on = [module.eks]
 
   # (선택) 외부에서 ArgoCD UI에 접속하고 싶다면 아래 주석을 해제하세요.
   # set {
