@@ -3,6 +3,11 @@ locals {
   cluster_name = "${local.name_prefix}-eks-cluster"
 }
 
+# cluster_sg_to_node_kubelet 규칙에서 VPC CIDR을 동적으로 참조하기 위해 추가
+data "aws_vpc" "main" {
+  id = var.vpc_id
+}
+
 # ── IAM: 클러스터 Role ────────────────────────────────────────────────
 resource "aws_iam_role" "cluster" {
   name = "${local.name_prefix}-eks-cluster-role"
@@ -105,6 +110,21 @@ resource "aws_security_group_rule" "cp_to_node_kubelet" {
   description              = "Control plane to node: kubelet"
   security_group_id        = aws_security_group.node.id
   source_security_group_id = aws_security_group.control_plane.id
+}
+
+# [추가] EKS 자동생성 cluster SG → 워커 노드: kubelet (10250)
+# EKS가 자동 생성하는 cluster SG는 Terraform 관리 밖이므로 source_sg 지정 불가.
+# kubectl logs / kubectl exec 는 cluster SG 경유로 kubelet(10250)에 접근하는데,
+# cp_to_node_kubelet(additional SG) 규칙만으로는 이 경로가 차단됨.
+# VPC CIDR 전체를 허용해 cluster SG에서 오는 트래픽도 수용.
+resource "aws_security_group_rule" "cluster_sg_to_node_kubelet" {
+  type              = "ingress"
+  from_port         = 10250
+  to_port           = 10250
+  protocol          = "tcp"
+  description       = "EKS cluster SG to node: kubelet (for kubectl logs/exec)"
+  security_group_id = aws_security_group.node.id
+  cidr_blocks       = [data.aws_vpc.main.cidr_block]
 }
 
 # 컨트롤 플레인 → 워커 노드: HTTPS (443)
