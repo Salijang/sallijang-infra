@@ -310,7 +310,21 @@ resource "aws_eks_access_policy_association" "yji_admin_policy" {
     type = "cluster"
   }
 }
+resource "aws_eks_access_entry" "jyc_admin" {
+  cluster_name      = aws_eks_cluster.main.name
+  principal_arn     = "arn:aws:iam::594486941613:user/JYC"
+  type              = "STANDARD"
+}
 
+resource "aws_eks_access_policy_association" "jyc_admin_policy" {
+  cluster_name  = aws_eks_cluster.main.name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = "arn:aws:iam::594486941613:user/JYC"
+
+  access_scope {
+    type = "cluster"
+  }
+}
 # 워커 노드가 자기 자신 및 컨트롤 플레인으로부터의 10250 포트 접근을 허용해야 합니다.
 resource "aws_security_group_rule" "node_inbound_kubelet" {
   type              = "ingress"
