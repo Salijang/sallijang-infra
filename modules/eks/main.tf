@@ -295,3 +295,38 @@ resource "aws_autoscaling_group" "node" {
     aws_eks_access_entry.node,
   ]
 }
+resource "aws_eks_access_entry" "yji_admin" {
+  cluster_name      = aws_eks_cluster.main.name
+  principal_arn     = "arn:aws:iam::594486941613:user/YJI"
+  type              = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "yji_admin_policy" {
+  cluster_name  = aws_eks_cluster.main.name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = "arn:aws:iam::594486941613:user/YJI"
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
+# 워커 노드가 자기 자신 및 컨트롤 플레인으로부터의 10250 포트 접근을 허용해야 합니다.
+resource "aws_security_group_rule" "node_inbound_kubelet" {
+  type              = "ingress"
+  from_port         = 10250
+  to_port           = 10250
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"] # 테스트를 위해 전체 허용 후 나중에 VPC 대역으로 좁히세요.
+  security_group_id = aws_security_group.node.id
+}
+
+# ArgoCD UI 포트(443)에 대한 접근도 확인이 필요할 수 있습니다.
+resource "aws_security_group_rule" "node_inbound_https" {
+  type              = "ingress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  cidr_blocks       = ["0.0.0.0/0"]
+  security_group_id = aws_security_group.node.id
+}
