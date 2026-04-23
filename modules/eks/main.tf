@@ -82,23 +82,27 @@ resource "aws_security_group" "node" {
   description = "EKS Self-managed worker node SG"
   vpc_id      = var.vpc_id
 
-  # 노드 간 전체 통신 허용 (CoreDNS, kube-proxy 등)
-  ingress {
-    description = "Node to node all traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   tags = { Name = "${local.name_prefix}-sg-eks-node" }
+}
+
+# 노드 간 전체 통신 허용 (CoreDNS, kube-proxy 등)
+resource "aws_security_group_rule" "node_self_all" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  description       = "Node to node all traffic"
+  security_group_id = aws_security_group.node.id
+  self              = true
+}
+
+resource "aws_security_group_rule" "node_egress_all" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  security_group_id = aws_security_group.node.id
+  cidr_blocks       = ["0.0.0.0/0"]
 }
 
 # 컨트롤 플레인 → 워커 노드: kubelet (10250)
@@ -344,23 +348,4 @@ resource "aws_eks_access_policy_association" "jyc_admin_policy" {
   access_scope {
     type = "cluster"
   }
-}
-# 워커 노드가 자기 자신 및 컨트롤 플레인으로부터의 10250 포트 접근을 허용해야 합니다.
-resource "aws_security_group_rule" "node_inbound_kubelet" {
-  type              = "ingress"
-  from_port         = 10250
-  to_port           = 10250
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"] # 테스트를 위해 전체 허용 후 나중에 VPC 대역으로 좁히세요.
-  security_group_id = aws_security_group.node.id
-}
-
-# ArgoCD UI 포트(443)에 대한 접근도 확인이 필요할 수 있습니다.
-resource "aws_security_group_rule" "node_inbound_https" {
-  type              = "ingress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.node.id
 }
