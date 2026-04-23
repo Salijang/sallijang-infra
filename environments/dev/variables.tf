@@ -73,3 +73,9 @@ variable "route53_zone_name" {
   description = "Route53 hosted zone의 apex 도메인 (e.g. sallijang.shop). ALB alias A 레코드 생성에 사용."
   default     = ""
 }
+
+variable "grafana_admin_password" {
+  type        = string
+  description = "Grafana 관리자 비밀번호. terraform.tfvars에 직접 쓰거나 TF_VAR_grafana_admin_password 환경 변수로 주입."
+  sensitive   = true
+}
