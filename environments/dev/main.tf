@@ -97,6 +97,7 @@ module "iam" {
   image_bucket_arn = module.s3.image_bucket_arn
 
   kubernetes_namespace = var.kubernetes_namespace
+  db_username          = "adminuser" # [추가] RDSProxyIAMAuth 정책 ARN 생성에 필요 (modules/iam/variables.tf 참고)
 }
 
 module "alb" {
