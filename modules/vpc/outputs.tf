@@ -50,3 +50,9 @@ output "redis_sg_id" {
   description = "Redis Security Group ID"
   value       = aws_security_group.redis.id
 }
+
+# Route Tables
+output "private_route_table_ids" {
+  description = "Private route table IDs (AZ별, S3 Gateway Endpoint 연결용)"
+  value       = aws_route_table.private[*].id
+}
