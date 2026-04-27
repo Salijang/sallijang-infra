@@ -99,6 +99,37 @@ module "iam" {
   kubernetes_namespace = var.kubernetes_namespace
 }
 
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  image_bucket_name                 = module.s3.image_bucket_name
+  image_bucket_arn                  = module.s3.image_bucket_arn
+  image_bucket_regional_domain_name = module.s3.image_bucket_regional_domain_name
+  hosted_zone_id                    = var.hosted_zone_id
+  domain_name                       = var.domain_name
+  route53_zone_name                 = var.route53_zone_name
+}
+
+module "vpc_endpoints" {
+  source = "../../modules/vpc-endpoints"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  vpc_id                  = module.vpc.vpc_id
+  eks_subnet_ids          = module.vpc.eks_subnet_ids
+  private_route_table_ids = module.vpc.private_route_table_ids
+  eks_sg_id               = module.vpc.eks_sg_id
+}
+
 module "alb" {
   source = "../../modules/alb"
 
