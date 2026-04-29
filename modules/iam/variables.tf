@@ -46,3 +46,10 @@ variable "kubernetes_namespace" {
   description = "ServiceAccount가 위치할 Kubernetes 네임스페이스"
   default     = "default"
 }
+
+# [추가] RDSProxyIAMAuth 정책의 Resource ARN에 DB 사용자 이름이 필요해서 변수로 분리
+# arn:aws:rds-db:<region>:<account>:dbuser:*/<db_username> 형태로 사용됨
+variable "db_username" {
+  type        = string
+  description = "RDS DB 사용자 이름 — rds-db:connect 리소스 ARN에 사용"
+}

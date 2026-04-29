@@ -154,27 +154,31 @@ resource "aws_security_group" "alb" {
   tags = { Name = "${local.name_prefix}-sg-alb" }
 }
 
-# 2. EKS 보안 그룹 (껍데기)
+# 2. EKS 보안 그룹
 resource "aws_security_group" "eks" {
   name   = "${local.name_prefix}-sg-eks"
   vpc_id = aws_vpc.main.id
 
-  ingress {
-    description = "Node to node communication"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
   tags = { Name = "${local.name_prefix}-sg-eks" }
+}
+
+resource "aws_security_group_rule" "eks_self_all" {
+  type              = "ingress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  description       = "Node to node communication"
+  security_group_id = aws_security_group.eks.id
+  self              = true
+}
+
+resource "aws_security_group_rule" "eks_egress_all" {
+  type              = "egress"
+  from_port         = 0
+  to_port           = 0
+  protocol          = "-1"
+  security_group_id = aws_security_group.eks.id
+  cidr_blocks       = ["0.0.0.0/0"]
 }
 
 # 3. 순환 참조를 끊어주는 연결 규칙 (핵심!)
