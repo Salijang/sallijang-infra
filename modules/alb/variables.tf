@@ -49,3 +49,9 @@ variable "route53_zone_name" {
   description = "Route53 hosted zone의 apex 도메인 (e.g. sallijang.shop). 입력 시 ALB alias A 레코드 자동 생성."
   default     = ""
 }
+
+variable "log_bucket_name" {
+  type        = string
+  description = "ALB 접근 로그를 저장할 S3 버킷 이름. 비우면 로깅 비활성화."
+  default     = ""
+}

@@ -113,9 +113,30 @@ module "cloudfront" {
   image_bucket_name                 = module.s3.image_bucket_name
   image_bucket_arn                  = module.s3.image_bucket_arn
   image_bucket_regional_domain_name = module.s3.image_bucket_regional_domain_name
-  hosted_zone_id                    = var.hosted_zone_id
-  domain_name                       = var.domain_name
-  route53_zone_name                 = var.route53_zone_name
+
+  frontend_bucket_name                 = module.s3.frontend_bucket_name
+  frontend_bucket_arn                  = module.s3.frontend_bucket_arn
+  frontend_bucket_regional_domain_name = module.s3.frontend_bucket_regional_domain_name
+
+  log_bucket_domain_name = module.s3.log_bucket_domain_name
+
+  hosted_zone_id    = var.hosted_zone_id
+  domain_name       = var.domain_name
+  route53_zone_name = var.route53_zone_name
+}
+
+module "karpenter" {
+  source = "../../modules/karpenter"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  cluster_name      = module.eks.cluster_name
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_issuer_url   = module.eks.oidc_issuer_url
+
+  eks_subnet_ids = module.vpc.eks_subnet_ids
+  node_sg_id     = module.eks.node_sg_id
 }
 
 module "vpc_endpoints" {
@@ -145,4 +166,6 @@ module "alb" {
   certificate_arn   = var.certificate_arn
   node_port         = var.node_port
   route53_zone_name = var.route53_zone_name
+
+  log_bucket_name = module.s3.log_bucket_name
 }

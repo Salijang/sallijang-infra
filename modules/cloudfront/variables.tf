@@ -15,25 +15,45 @@ variable "image_bucket_name" {
 
 variable "image_bucket_arn" {
   type        = string
-  description = "이미지 S3 버킷 ARN — 버킷 정책 Resource 필드"
+  description = "이미지 S3 버킷 ARN"
 }
 
 variable "image_bucket_regional_domain_name" {
   type        = string
-  description = "이미지 S3 버킷 리전 도메인명 — CloudFront Origin 도메인"
+  description = "이미지 S3 버킷 리전 도메인명 — CloudFront Origin"
+}
+
+variable "frontend_bucket_name" {
+  type        = string
+  description = "프론트엔드 S3 버킷 이름"
+}
+
+variable "frontend_bucket_arn" {
+  type        = string
+  description = "프론트엔드 S3 버킷 ARN"
+}
+
+variable "frontend_bucket_regional_domain_name" {
+  type        = string
+  description = "프론트엔드 S3 버킷 리전 도메인명 — CloudFront Origin"
+}
+
+variable "log_bucket_domain_name" {
+  type        = string
+  description = "로그 S3 버킷 도메인명 (.s3.amazonaws.com) — CloudFront logging_config"
 }
 
 variable "hosted_zone_id" {
   type        = string
-  description = "Route53 hosted zone ID — ACM DNS 검증 레코드 및 CDN A 레코드 생성"
+  description = "Route53 hosted zone ID"
 }
 
 variable "domain_name" {
   type        = string
-  description = "기본 도메인 (e.g. sallijang.shop) — cdn. 서브도메인 생성에 사용"
+  description = "기본 도메인 (e.g. sallijang.shop)"
 }
 
 variable "route53_zone_name" {
   type        = string
-  description = "Route53 hosted zone apex 도메인 (e.g. sallijang.shop)"
+  description = "Route53 hosted zone apex 도메인"
 }

@@ -1,0 +1,55 @@
+# EC2NodeClass: Karpenter가 프로비저닝할 노드의 AWS 인프라 설정
+#
+# 적용 전 확인:
+#   - spec.role: Terraform output module.karpenter.node_role_name
+#   - subnetSelectorTerms.tags: karpenter.sh/discovery=<cluster-name>
+#     → Terraform이 EKS 서브넷에 자동 태그 부착
+#   - securityGroupSelectorTerms.tags: 동일
+#
+# 적용:
+#   kubectl apply -f karpenter-ec2nodeclass.yaml
+
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: default
+spec:
+  # Terraform output: module.karpenter.node_role_name
+  # 예: pickup-dev-karpenter-node-role
+  role: "pickup-dev-karpenter-node-role"
+
+  # AL2 최신 EKS 최적화 AMI (EKS 1.29 자동 선택)
+  amiSelectorTerms:
+    - alias: al2@latest
+
+  # EKS 서브넷 — karpenter.sh/discovery 태그로 자동 발견
+  # (Terraform: modules/karpenter/main.tf aws_ec2_tag.subnet_karpenter)
+  subnetSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "pickup-dev-eks-cluster"
+
+  # EKS 워커 노드 보안 그룹 — karpenter.sh/discovery 태그로 자동 발견
+  # (Terraform: modules/karpenter/main.tf aws_ec2_tag.node_sg_karpenter)
+  securityGroupSelectorTerms:
+    - tags:
+        karpenter.sh/discovery: "pickup-dev-eks-cluster"
+
+  # 루트 볼륨: 기존 ASG 노드와 동일한 스펙
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 50Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+
+  # IMDSv2 강제 (보안) — hop=2 로 컨테이너에서 IMDS 접근 허용
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+
+  tags:
+    managed-by: karpenter
+    kubernetes.io/cluster/pickup-dev-eks-cluster: owned
