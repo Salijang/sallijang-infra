@@ -1,0 +1,186 @@
+# NodePool: Karpenter가 노드를 프로비저닝할 때 사용하는 정책
+#
+# 전략:
+#   - 인스턴스: t3.medium (2vCPU/4GB), t3.large (2vCPU/8GB) 혼합
+#   - 용량 타입: spot 우선 → on-demand 폴백 (비용 절감)
+#   - AZ: ap-northeast-2a, ap-northeast-2c (기존 ASG와 동일)
+#   - 통합: 비어있거나 저사용 노드 자동 통합 (1분 후)
+#
+# 적용:
+#   kubectl apply -f karpenter-nodepool.yaml
+
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: default
+spec:
+  template:
+    metadata:
+      labels:
+        managed-by: karpenter
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+
+      requirements:
+        # 아키텍처: x86_64만 사용 (AL2 AMI 기준)
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+
+        # 용량 타입: spot 우선, on-demand 폴백
+        # Karpenter는 가격 대비 spot을 자동 선택
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["spot", "on-demand"]
+
+        # 인스턴스 패밀리: t3 계열
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["t3"]
+
+        # 인스턴스 사이즈: medium(4GB), large(8GB)
+        # medium: 일반 파드, large: 메모리 집약 파드
+        - key: karpenter.k8s.aws/instance-size
+          operator: In
+          values: ["medium", "large"]
+
+        # AZ: 기존 ASG와 동일한 2개 AZ
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: ["ap-northeast-2a", "ap-northeast-2c"]
+
+      # 노드 자동 만료: 30일 (보안 패치 적용 순환)
+      expireAfter: 720h
+
+  # 클러스터 전체 리소스 상한 — 비용 폭증 방지
+  limits:
+    cpu: "100"       # t3.large 기준 약 50대
+    memory: 400Gi
+
+  # 노드 통합 정책
+  disruption:
+    # 비어있거나 저사용률인 노드를 통합 (스팟 비용 추가 절감)
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    # 통합 판단까지 대기 시간 (짧을수록 공격적)
+    consolidateAfter: 1m
+
+---
+# 온디맨드 전용 NodePool (시스템 컴포넌트용)
+# kube-system, karpenter 네임스페이스의 핵심 파드는
+# spot 인터럽션 영향을 받지 않도록 on-demand 노드에 배치
+
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: system
+spec:
+  template:
+    metadata:
+      labels:
+        managed-by: karpenter
+        node-role: system
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+
+      # 시스템 NodePool 전용 taint — toleration 없는 파드 스케줄 방지
+      taints:
+        - key: node-role
+          value: system
+          effect: NoSchedule
+
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+
+        # 온디맨드만 허용 (시스템 안정성)
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["t3"]
+
+        - key: karpenter.k8s.aws/instance-size
+          operator: In
+          values: ["medium", "large"]
+
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: ["ap-northeast-2a", "ap-northeast-2c"]
+
+      expireAfter: 720h
+
+  limits:
+    cpu: "20"
+    memory: 80Gi
+
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 5m
+
+---
+# 모니터링 전용 NodePool
+# Prometheus, Grafana, Loki 등 모니터링 스택 전용
+# taint: monitoring=true:NoSchedule → toleration 명시한 파드만 스케줄됨
+
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: monitoring
+spec:
+  template:
+    metadata:
+      labels:
+        managed-by: karpenter
+        node-role: monitoring
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: default
+
+      taints:
+        - key: monitoring
+          value: "true"
+          effect: NoSchedule
+
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+
+        # 모니터링 데이터 유실 방지 — on-demand 전용
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["t3"]
+
+        # 모니터링 스택은 메모리 사용량이 높음 → large 고정
+        - key: karpenter.k8s.aws/instance-size
+          operator: In
+          values: ["large"]
+
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: ["ap-northeast-2a", "ap-northeast-2c"]
+
+      expireAfter: 720h
+
+  limits:
+    cpu: "20"
+    memory: 80Gi
+
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 10m

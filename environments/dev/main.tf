@@ -97,6 +97,77 @@ module "iam" {
   image_bucket_arn = module.s3.image_bucket_arn
 
   kubernetes_namespace = var.kubernetes_namespace
+  db_username          = "adminuser" # [추가] RDSProxyIAMAuth 정책 ARN 생성에 필요 (modules/iam/variables.tf 참고)
+}
+
+module "cloudfront" {
+  source = "../../modules/cloudfront"
+
+  providers = {
+    aws           = aws
+    aws.us_east_1 = aws.us_east_1
+  }
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  image_bucket_name                 = module.s3.image_bucket_name
+  image_bucket_arn                  = module.s3.image_bucket_arn
+  image_bucket_regional_domain_name = module.s3.image_bucket_regional_domain_name
+
+  frontend_bucket_name                 = module.s3.frontend_bucket_name
+  frontend_bucket_arn                  = module.s3.frontend_bucket_arn
+  frontend_bucket_regional_domain_name = module.s3.frontend_bucket_regional_domain_name
+
+  log_bucket_domain_name = module.s3.log_bucket_domain_name
+
+  hosted_zone_id    = var.hosted_zone_id
+  domain_name       = var.domain_name
+  route53_zone_name = var.route53_zone_name
+}
+
+module "karpenter" {
+  source = "../../modules/karpenter"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  cluster_name      = module.eks.cluster_name
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_issuer_url   = module.eks.oidc_issuer_url
+
+  eks_subnet_ids = module.vpc.eks_subnet_ids
+  node_sg_id     = module.eks.node_sg_id
+}
+
+module "vpc_endpoints" {
+  source = "../../modules/vpc-endpoints"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  vpc_id                  = module.vpc.vpc_id
+  eks_subnet_ids          = module.vpc.eks_subnet_ids
+  private_route_table_ids = module.vpc.private_route_table_ids
+  eks_sg_id               = module.vpc.eks_sg_id
+}
+
+module "lambda" {
+  source = "../../modules/lambda"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.data_subnet_ids
+
+  image_bucket_name = module.s3.image_bucket_name
+  image_bucket_arn  = module.s3.image_bucket_arn
+  sns_topic_arn     = module.sns.topic_arn
+
+  code_s3_bucket           = var.lambda_code_s3_bucket
+  image_resize_code_s3_key = var.image_resize_code_s3_key
+  sns_notify_code_s3_key   = var.sns_notify_code_s3_key
 }
 
 module "alb" {
@@ -114,4 +185,6 @@ module "alb" {
   certificate_arn   = var.certificate_arn
   node_port         = var.node_port
   route53_zone_name = var.route53_zone_name
+
+  log_bucket_name = module.s3.log_bucket_name
 }

@@ -18,6 +18,7 @@ locals {
     for sa_name in [
       "sallijang-order-sa",
       "sallijang-product-sa",
+      "sallijang-notify-sa", # [추가] notify 서비스 IRSA 역할 신설에 따라 Trust Policy 대상에 포함
       "sallijang-user-sa",
       "sallijang-frontend-sa",
     ] : sa_name => jsonencode({
@@ -44,6 +45,7 @@ locals {
 #    - SQS: SendMessage, ReceiveMessage, DeleteMessage
 #    - SNS: Publish
 #    - Secrets Manager: GetSecretValue
+#    - [추가] RDS Proxy IAM Auth: order 서비스가 RDS Proxy에 IAM 토큰으로 접속하므로 추가
 # ═══════════════════════════════════════════════════════════════════════
 resource "aws_iam_role" "order" {
   name               = "${local.name_prefix}-order-sa-role"
@@ -89,6 +91,12 @@ resource "aws_iam_policy" "order" {
         Action   = ["secretsmanager:GetSecretValue"]
         Resource = [local.secrets_arn_pattern]
       },
+      {
+        Sid      = "RDSProxyIAMAuth"
+        Effect   = "Allow"
+        Action   = ["rds-db:connect"]
+        Resource = ["arn:aws:rds-db:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:dbuser:*/${var.db_username}"]
+      },
     ]
   })
 
@@ -108,6 +116,7 @@ resource "aws_iam_role_policy_attachment" "order" {
 # 2. sallijang-product-sa
 #    - S3: PutObject, GetObject, DeleteObject (images 버킷 한정)
 #    - Secrets Manager: GetSecretValue
+#    - [추가] RDS Proxy IAM Auth: product 서비스가 RDS Proxy에 IAM 토큰으로 접속하므로 추가
 # ═══════════════════════════════════════════════════════════════════════
 resource "aws_iam_role" "product" {
   name               = "${local.name_prefix}-product-sa-role"
@@ -147,6 +156,12 @@ resource "aws_iam_policy" "product" {
         Action   = ["secretsmanager:GetSecretValue"]
         Resource = [local.secrets_arn_pattern]
       },
+      {
+        Sid      = "RDSProxyIAMAuth"
+        Effect   = "Allow"
+        Action   = ["rds-db:connect"]
+        Resource = ["arn:aws:rds-db:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:dbuser:*/${var.db_username}"]
+      },
     ]
   })
 
@@ -163,9 +178,62 @@ resource "aws_iam_role_policy_attachment" "product" {
 }
 
 # ═══════════════════════════════════════════════════════════════════════
-# 3. sallijang-user-sa
+# 3. sallijang-notify-sa  [신규 추가]
+#    notify 서비스가 처음에는 IAM 역할 없이 배포되어 AssumeRoleWithWebIdentity 오류 발생.
+#    user/product/order와 동일하게 IRSA 역할을 신설하고 RDS Proxy 접근 권한 부여.
+#    - RDS Proxy IAM Auth
+#    - Secrets Manager: GetSecretValue
+# ═══════════════════════════════════════════════════════════════════════
+resource "aws_iam_role" "notify" {
+  name               = "${local.name_prefix}-notify-sa-role"
+  assume_role_policy = local.trust_policy["sallijang-notify-sa"]
+
+  tags = {
+    Name        = "${local.name_prefix}-notify-sa-role"
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_iam_policy" "notify" {
+  name = "${local.name_prefix}-notify-sa-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "SecretsManagerRead"
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = [local.secrets_arn_pattern]
+      },
+      {
+        Sid      = "RDSProxyIAMAuth"
+        Effect   = "Allow"
+        Action   = ["rds-db:connect"]
+        Resource = ["arn:aws:rds-db:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:dbuser:*/${var.db_username}"]
+      },
+    ]
+  })
+
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "notify" {
+  role       = aws_iam_role.notify.name
+  policy_arn = aws_iam_policy.notify.arn
+}
+
+# ═══════════════════════════════════════════════════════════════════════
+# 4. sallijang-user-sa
 #    - Cognito: cognito-idp:*
 #    - Secrets Manager: GetSecretValue
+#    - [추가] RDS Proxy IAM Auth: user 서비스도 RDS Proxy 경유 접속이므로 통일
 # ═══════════════════════════════════════════════════════════════════════
 resource "aws_iam_role" "user" {
   name               = "${local.name_prefix}-user-sa-role"
@@ -196,6 +264,12 @@ resource "aws_iam_policy" "user" {
         Effect   = "Allow"
         Action   = ["secretsmanager:GetSecretValue"]
         Resource = [local.secrets_arn_pattern]
+      },
+      {
+        Sid      = "RDSProxyIAMAuth"
+        Effect   = "Allow"
+        Action   = ["rds-db:connect"]
+        Resource = ["arn:aws:rds-db:${data.aws_region.current.id}:${data.aws_caller_identity.current.account_id}:dbuser:*/${var.db_username}"]
       },
     ]
   })

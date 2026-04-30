@@ -1,0 +1,68 @@
+# Ingress: nginx Ingress Controller가 경로별로 트래픽을 라우팅합니다.
+#
+# 트래픽 흐름:
+#   ALB → NodePort 30080 → nginx Ingress Controller → 경로 매칭 → Pod
+#
+# 선행 조건:
+#   helm_release.ingress_nginx 가 먼저 설치되어 있어야 합니다.
+#
+# 적용:
+#   kubectl apply -f ingress.yaml
+#
+# 확인:
+#   kubectl get ingress -n default
+#   kubectl describe ingress sallijang-ingress -n default
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sallijang-ingress
+  namespace: default
+  annotations:
+    # nginx Ingress Controller 사용 선언
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    # ALB가 TLS 종단 처리 — nginx는 HTTP 그대로 백엔드에 전달
+    nginx.ingress.kubernetes.io/ssl-redirect: "false"
+    # 실제 클라이언트 IP를 백엔드에 전달 (ALB X-Forwarded-For 신뢰)
+    nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: api.sallijang.shop
+      http:
+        paths:
+          # 주문 서비스 — 예약 생성·조회·취소
+          - path: /api/v1/orders(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: order-service
+                port:
+                  number: 8080
+
+          # 상품 서비스 — 픽업 상품 목록·상세
+          - path: /api/v1/products(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: product-service
+                port:
+                  number: 8080
+
+          # 사용자 서비스 — 인증·프로필
+          - path: /api/v1/users(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 8080
+
+          # 가게 서비스 — 가게 목록·상세
+          - path: /api/v1/stores(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: store-service
+                port:
+                  number: 8080

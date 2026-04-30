@@ -27,3 +27,8 @@ output "proxy_arn" {
   description = "RDS Proxy ARN"
   value       = aws_db_proxy.main.arn
 }
+
+output "read_replica_endpoint" {
+  description = "Read Replica 엔드포인트 (enable_read_replica = true 시에만 값 있음)"
+  value       = var.enable_read_replica ? aws_db_instance.read_replica[0].endpoint : null
+}

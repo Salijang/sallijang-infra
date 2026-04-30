@@ -57,3 +57,13 @@ output "rds_master_user_secret_arn" {
   description = "RDS 마스터 계정 Secrets Manager ARN — IRSA 정책에서 참조"
   value       = module.rds.master_user_secret_arn
 }
+
+output "lambda_image_resize_arn" {
+  description = "이미지 리사이징 Lambda ARN (Lambda 미배포 시 null)"
+  value       = module.lambda.image_resize_function_arn
+}
+
+output "lambda_sns_notify_arn" {
+  description = "SNS 알림 Lambda ARN (Lambda 미배포 시 null)"
+  value       = module.lambda.sns_notify_function_arn
+}

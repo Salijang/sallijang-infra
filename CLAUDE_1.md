@@ -36,7 +36,16 @@
 - **SQS**: 예약 큐 + DLQ
 - **SNS**: 알림 토픽 (SQS 구독 연결)
 - **ALB**: HTTPS (443), WAF 연결
+- **CloudFront**: 이미지 CDN (cdn.sallijang.shop), OAC, PriceClass_200
+- **VPC Endpoints**: S3 Gateway + Interface 7개 (ECR, STS, Secrets Manager, SQS, SNS, Logs)
 - **Secrets Manager**: RDS 비밀번호 AWS managed (하드코딩 금지)
+
+### 콘솔로 관리 중인 리소스
+Terraform 외부에서 수동으로 생성·관리하는 리소스 목록
+
+| 리소스 | 설명 |
+|--------|------|
+| **ECR 리포지토리** | 각 마이크로서비스 컨테이너 이미지 저장소. 콘솔에서 직접 생성 후 ArgoCD가 Pull. |
 
 ---
 
@@ -50,6 +59,9 @@ sallijang-infra/
 │   │   ├── variables.tf     # 변수 정의
 │   │   ├── terraform.tfvars # 개발 환경 값
 │   │   ├── outputs.tf
+│   │   ├── providers.tf     # Helm provider (EKS OIDC 인증)
+│   │   ├── versions.tf      # TF >= 1.5, AWS ~> 6.0, us-east-1 alias provider
+│   │   ├── argocd.tf        # ArgoCD Helm Release
 │   │   └── backend.tf       # local 백엔드 (현재 로컬 tfstate)
 │   └── prod/
 │       ├── main.tf          # ⚠️ 미구현 (비어있음)
@@ -60,14 +72,17 @@ sallijang-infra/
 │       └── versions.tf      # prod 전용 provider 버전 고정
 │
 ├── modules/
-│   ├── vpc/          # VPC, Subnet, IGW, NAT, Route Table, SG
-│   ├── eks/          # EKS Cluster, Self-managed Node Group (ASG + Launch Template), IRSA
-│   ├── rds/          # PostgreSQL 16, Subnet Group (Secrets Manager managed pw)
-│   ├── elasticache/  # Redis Cluster
-│   ├── s3/           # S3 Buckets, Lifecycle
-│   ├── sqs/          # SQS Queue, DLQ
-│   ├── sns/          # SNS Topic, SQS 구독
-│   └── alb/          # ALB, Target Group, WAF
+│   ├── vpc/           # VPC, Subnet, IGW, NAT, Route Table, SG
+│   ├── eks/           # EKS Cluster, Self-managed Node Group (ASG + Launch Template), IRSA
+│   ├── rds/           # PostgreSQL 16, RDS Proxy, Subnet Group
+│   ├── elasticache/   # Redis Cluster
+│   ├── s3/            # S3 Buckets, Lifecycle
+│   ├── sqs/           # SQS Queue, DLQ
+│   ├── sns/           # SNS Topic, SQS 구독
+│   ├── alb/           # ALB, Target Group, WAF
+│   ├── iam/           # IRSA 역할 4개 (order, product, user, frontend)
+│   ├── vpc-endpoints/ # S3 Gateway + Interface Endpoints (ECR, STS 등)
+│   └── cloudfront/    # CloudFront Distribution, OAC, ACM (us-east-1)
 │
 ├── versions.tf       # 루트 Terraform/Provider 버전
 └── CLAUDE_1.md
@@ -84,6 +99,7 @@ sallijang-infra/
 - NAT Gateway x2 (각 AZ)
 - Route Table (Public, Private)
 - Security Groups (EKS, RDS, Redis, ALB)
+- **output**: `private_route_table_ids` (S3 Gateway Endpoint 연결용)
 
 ### modules/eks ✅ 완료
 - EKS Cluster (버전 1.29)
@@ -102,6 +118,7 @@ sallijang-infra/
 - 인스턴스: db.t3.small (dev) / db.t3.medium (prod)
 - Storage: gp3, 암호화
 - **비밀번호**: `manage_master_user_password = true` → AWS Secrets Manager 자동 관리 (하드코딩 금지)
+- RDS Proxy (TLS 강제, IAM 인증)
 - Multi-AZ: 현재 false (dev 기준, prod 적용 시 변경 필요)
 - skip_final_snapshot: true (dev), prod 전환 시 false로 변경 필요
 - Subnet Group
@@ -116,6 +133,7 @@ sallijang-infra/
 - `{project}-{env}-logs` (애플리케이션 로그)
 - `{project}-{env}-backup` (DB 스냅샷)
 - 퍼블릭 접근 차단, 서버 사이드 암호화
+- **output**: `image_bucket_regional_domain_name` (CloudFront Origin 연결용)
 
 ### modules/sqs ✅ 완료
 - `{project}-{env}-reservation` (예약 처리 메인 큐)
@@ -129,12 +147,50 @@ sallijang-infra/
 - 전송 실패 CloudWatch Logs 피드백 (IAM Role 포함)
 - **sqs 모듈과 별도 모듈로 분리됨** (`modules/sns/`)
 
-### modules/alb ⚠️ 구현 여부 확인 필요
+### modules/alb ✅ 완료
 - Application Load Balancer
 - HTTPS Listener (443)
 - HTTP → HTTPS 리다이렉트
-- Target Group (EKS 연결용)
-- WAF Web ACL
+- Target Group (EKS NodePort 30080)
+- WAF Web ACL (AWSManagedRulesCommonRuleSet, KnownBadInputs)
+- Route53 Alias A 레코드
+
+### modules/iam ✅ 완료
+IRSA(IAM Roles for Service Accounts) 기반 마이크로서비스별 최소권한 역할
+
+| Role | 권한 |
+|------|------|
+| `sallijang-order-sa` | SQS (R/W/D), SNS Publish, Secrets Manager |
+| `sallijang-product-sa` | S3 이미지 버킷 PutObject/Get/Delete, Secrets Manager |
+| `sallijang-user-sa` | Cognito `cognito-idp:*`, Secrets Manager |
+| `sallijang-frontend-sa` | CloudWatch Logs (Create/Put/Describe) |
+
+### modules/vpc-endpoints ✅ 완료
+EKS 워커노드가 AWS 서비스를 인터넷 없이 VPC 내부에서 직접 호출하기 위한 엔드포인트
+
+| 타입 | 서비스 | 용도 |
+|------|--------|------|
+| Gateway | s3 | ECR 이미지 레이어, S3 직접 통신 (비용 없음) |
+| Interface | ecr.api, ecr.dkr | ECR 이미지 Pull |
+| Interface | sts | IRSA 토큰 발급 |
+| Interface | secretsmanager | RDS 비밀번호 조회 |
+| Interface | sqs, sns | 메시지 큐/토픽 접근 |
+| Interface | logs | CloudWatch Logs 전송 |
+
+- Interface 엔드포인트 전용 보안 그룹 생성 (EKS 워커노드 SG → 443 허용)
+- `private_dns_enabled = true` → 서비스 원래 DNS명으로 자동 해석 (앱 코드 변경 불필요)
+- `for_each` 사용 → 서비스 추가 시 맵에 한 줄만 추가
+
+### modules/cloudfront ✅ 완료
+이미지 버킷 앞단 CDN. `cdn.sallijang.shop`으로 서비스
+
+- **Origin**: `{project}-{env}-images` S3 버킷
+- **OAC** (Origin Access Control): S3 직접 URL 접근 차단, sigv4 서명 요청만 허용
+- **S3 버킷 정책**: CloudFront OAC만 `s3:GetObject` 허용 (`aws_s3_bucket_policy` 모듈 내 관리)
+- **ACM 인증서**: us-east-1 리전에서 생성 (CloudFront 요구사항), DNS 검증 자동화
+- **캐시 정책**: 이미지 TTL 7일, gzip + brotli 압축
+- **price_class**: PriceClass_200 (북미, 유럽, 아시아 포함)
+- **Route53**: `cdn.sallijang.shop` → CloudFront Alias A 레코드
 
 ---
 
@@ -144,7 +200,7 @@ sallijang-infra/
 |------|-----|------|
 | backend | local (로컬 tfstate) | S3 + DynamoDB 락 |
 | versions.tf | 루트 공유 | 환경별 독립 (`environments/prod/versions.tf`) |
-| main.tf | vpc, elasticache, rds 연결됨 | ⚠️ 비어있음 (미구현) |
+| main.tf | 전 모듈 연결됨 | ⚠️ 비어있음 (미구현) |
 | terraform.tfvars | 완성 | ⚠️ 비어있음 |
 
 ---
@@ -153,8 +209,8 @@ sallijang-infra/
 
 | 담당 | 모듈 |
 |------|------|
-| 나 | vpc, eks, alb |
-| 팀원 | rds, elasticache, s3, sqs, sns |
+| 나 | vpc, eks, alb, vpc-endpoints, cloudfront |
+| 팀원 | rds, elasticache, s3, sqs, sns, iam |
 
 ---
 
@@ -171,6 +227,8 @@ sallijang-infra/
 - pickup-dev-alb
 - pickup-dev-notification  (SNS)
 - pickup-dev-reservation   (SQS)
+- pickup-dev-vpce-s3       (VPC Endpoint)
+- pickup-dev-cloudfront    (CloudFront)
 ```
 
 ---
@@ -182,6 +240,9 @@ sallijang-infra/
 3. **eks/** - VPC 완료 후
 4. **s3/, sqs/, sns/** - 독립적, 언제든 가능 (sns는 sqs ARN 필요)
 5. **alb/** - VPC, EKS 완료 후
+6. **iam/** - EKS OIDC, SQS/SNS/S3 ARN 완료 후
+7. **vpc-endpoints/** - VPC 완료 후 (vpc_id, eks_subnet_ids, private_route_table_ids, eks_sg_id 참조)
+8. **cloudfront/** - S3 완료 후 (image_bucket_arn, image_bucket_regional_domain_name 참조)
 
 ---
 
@@ -193,6 +254,9 @@ sallijang-infra/
 4. **모듈 outputs 활용** - vpc_id, subnet_ids 등 다른 모듈에서 참조
 5. **prod main.tf 미작성** - prod 배포 전 반드시 모듈 연결 작업 필요
 6. **EKS Self-managed**: Cluster Autoscaler가 desired_capacity 관리, Terraform이 덮어쓰지 않도록 `ignore_changes` 설정됨
+7. **CloudFront ACM**: us-east-1 리전 전용. `providers = { aws.us_east_1 = aws.us_east_1 }` 명시 전달 필요
+8. **CloudFront 배포 시간**: `wait_for_deployment = false` 설정으로 apply는 즉시 반환, 실제 반영까지 수분 소요
+9. **ECR은 콘솔 관리**: Terraform 외부 리소스. ArgoCD가 이미지 Pull 시 해당 리포지토리 참조
 
 ---
 

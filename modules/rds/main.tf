@@ -146,13 +146,36 @@ resource "aws_db_instance" "main" {
   vpc_security_group_ids = [var.rds_sg_id]
   publicly_accessible    = false
 
-  multi_az            = false
-  skip_final_snapshot = true
-  deletion_protection = false
+  multi_az            = var.multi_az
+  skip_final_snapshot = var.skip_final_snapshot
+  deletion_protection = var.deletion_protection
 
   lifecycle {
     ignore_changes = [engine_version]
   }
 
   tags = { Name = "${local.name_prefix}-rds" }
+}
+
+# ── RDS Read Replica (prod 전용) ──────────────────────────────────────
+resource "aws_db_instance" "read_replica" {
+  count = var.enable_read_replica ? 1 : 0
+
+  identifier          = "${local.name_prefix}-rds-replica"
+  replicate_source_db = aws_db_instance.main.identifier
+  instance_class      = var.instance_class
+  availability_zone   = "ap-northeast-2c"
+
+  storage_encrypted      = true
+  publicly_accessible    = false
+  skip_final_snapshot    = true
+  deletion_protection    = false
+  db_subnet_group_name   = aws_db_subnet_group.main.name
+  vpc_security_group_ids = [var.rds_sg_id]
+
+  lifecycle {
+    ignore_changes = [engine_version]
+  }
+
+  tags = { Name = "${local.name_prefix}-rds-replica" }
 }

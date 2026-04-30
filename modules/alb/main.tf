@@ -125,6 +125,15 @@ resource "aws_lb" "main" {
 
   enable_deletion_protection = false
 
+  dynamic "access_logs" {
+    for_each = var.log_bucket_name != "" ? [1] : []
+    content {
+      bucket  = var.log_bucket_name
+      prefix  = "alb"
+      enabled = true
+    }
+  }
+
   tags = {
     Name        = "${local.name_prefix}-alb"
     Project     = var.project_name
