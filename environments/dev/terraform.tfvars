@@ -21,3 +21,8 @@ node_port         = 30080
 route53_zone_name = "sallijang.shop"
 
 # Grafana 관리자 비밀번호 — git 커밋 전 반드시 변경하거나 TF_VAR_grafana_admin_password 환경 변수로 주입
+# Lambda 코드 S3 버킷 — 코드 업로드 후 설정
+# lambda_code_s3_bucket    = "pickup-dev-lambda-code"
+# image_resize_code_s3_key = "lambda/image-resize.zip"
+# sns_notify_code_s3_key   = "lambda/sns-notify.zip"
+lambda_code_s3_bucket = ""

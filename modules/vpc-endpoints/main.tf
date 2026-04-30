@@ -20,7 +20,7 @@ locals {
 # EKS 워커노드 → VPC Endpoint 443 인바운드만 허용
 resource "aws_security_group" "vpc_endpoint" {
   name        = "${local.name_prefix}-sg-vpce"
-  description = "VPC Interface Endpoint — allow HTTPS from EKS worker nodes"
+  description = "VPC Interface Endpoint - allow HTTPS from EKS worker nodes"
   vpc_id      = var.vpc_id
 
   ingress {

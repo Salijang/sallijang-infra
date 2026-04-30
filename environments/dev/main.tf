@@ -152,6 +152,24 @@ module "vpc_endpoints" {
   eks_sg_id               = module.vpc.eks_sg_id
 }
 
+module "lambda" {
+  source = "../../modules/lambda"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  vpc_id     = module.vpc.vpc_id
+  subnet_ids = module.vpc.data_subnet_ids
+
+  image_bucket_name = module.s3.image_bucket_name
+  image_bucket_arn  = module.s3.image_bucket_arn
+  sns_topic_arn     = module.sns.topic_arn
+
+  code_s3_bucket           = var.lambda_code_s3_bucket
+  image_resize_code_s3_key = var.image_resize_code_s3_key
+  sns_notify_code_s3_key   = var.sns_notify_code_s3_key
+}
+
 module "alb" {
   source = "../../modules/alb"
 

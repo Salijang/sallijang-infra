@@ -165,7 +165,7 @@ resource "aws_s3_bucket_lifecycle_configuration" "backup" {
     }
 
     transition {
-      days          = 90
+      days          = 120
       storage_class = "GLACIER"
     }
 

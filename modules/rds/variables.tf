@@ -55,3 +55,27 @@ variable "db_username" {
   description = "Database master username"
 }
 
+variable "multi_az" {
+  type        = bool
+  description = "Multi-AZ 활성화 여부 (prod: true)"
+  default     = false
+}
+
+variable "skip_final_snapshot" {
+  type        = bool
+  description = "삭제 시 최종 스냅샷 생략 여부 (dev: true, prod: false)"
+  default     = true
+}
+
+variable "deletion_protection" {
+  type        = bool
+  description = "삭제 보호 활성화 여부 (prod: true)"
+  default     = false
+}
+
+variable "enable_read_replica" {
+  type        = bool
+  description = "Read Replica 생성 여부 (prod: true)"
+  default     = false
+}
+
