@@ -25,6 +25,11 @@ metadata:
     nginx.ingress.kubernetes.io/ssl-redirect: "false"
     # 실제 클라이언트 IP를 백엔드에 전달 (ALB X-Forwarded-For 신뢰)
     nginx.ingress.kubernetes.io/use-forwarded-headers: "true"
+    # /internal/ 경로는 서비스 간 내부 호출 전용 — 외부 접근 차단
+    nginx.ingress.kubernetes.io/server-snippet: |
+      location ~* ^/api/v1/notifications/internal {
+        return 403;
+      }
 spec:
   ingressClassName: nginx
   rules:
@@ -38,7 +43,7 @@ spec:
               service:
                 name: order-service
                 port:
-                  number: 8080
+                  number: 80
 
           # 상품 서비스 — 픽업 상품 목록·상세
           - path: /api/v1/products(/|$)(.*)
@@ -47,22 +52,56 @@ spec:
               service:
                 name: product-service
                 port:
-                  number: 8080
+                  number: 80
 
-          # 사용자 서비스 — 인증·프로필
+          # 사용자 서비스 — 인증·프로필·위시리스트
+          - path: /api/v1/auth(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+
           - path: /api/v1/users(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
               service:
                 name: user-service
                 port:
-                  number: 8080
+                  number: 80
 
-          # 가게 서비스 — 가게 목록·상세
+          - path: /api/v1/wishlists(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: user-service
+                port:
+                  number: 80
+
+          # 상품 서비스 — 가게·리뷰
           - path: /api/v1/stores(/|$)(.*)
             pathType: ImplementationSpecific
             backend:
               service:
-                name: store-service
+                name: product-service
                 port:
-                  number: 8080
+                  number: 80
+
+          - path: /api/v1/reviews(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: product-service
+                port:
+                  number: 80
+
+          # 알림 서비스 — 알림 목록·읽음 처리·설정
+          # /internal/ 하위 경로는 server-snippet으로 외부 차단 (위 annotation 참고)
+          - path: /api/v1/notifications(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: notify-service
+                port:
+                  number: 80
