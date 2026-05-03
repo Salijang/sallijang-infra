@@ -33,8 +33,12 @@ variable "cluster_version" {
 
 variable "public_access_cidrs" {
   type        = list(string)
-  description = "EKS API 서버 퍼블릭 접근 허용 CIDR 목록 (운영 시 사무실 IP로 좁힐 것)"
-  default     = ["0.0.0.0/0"]
+  description = "EKS API 서버 퍼블릭 접근 허용 CIDR 목록. prod는 반드시 사무실/VPN IP로 제한할 것."
+
+  validation {
+    condition     = length(var.public_access_cidrs) > 0
+    error_message = "public_access_cidrs는 최소 1개 이상이어야 합니다. prod 환경은 사무실/VPN IP로 제한하세요."
+  }
 }
 
 # ── 워커 노드 설정 ─────────────────────────────────────────────────────
