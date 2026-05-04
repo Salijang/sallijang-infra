@@ -66,7 +66,7 @@ resource "aws_iam_policy" "order" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "SQSAccess"
+        Sid    = "SQSReservationAccess"
         Effect = "Allow"
         Action = [
           "sqs:SendMessage",
@@ -77,6 +77,25 @@ resource "aws_iam_policy" "order" {
         Resource = [
           var.sqs_queue_arn,
           var.sqs_dlq_arn,
+        ]
+      },
+      {
+        Sid    = "SQSStockDeductPublish"
+        Effect = "Allow"
+        Action = ["sqs:SendMessage"]
+        Resource = [var.stock_deduct_queue_arn]
+      },
+      {
+        Sid    = "SQSStockResultConsume"
+        Effect = "Allow"
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+        ]
+        Resource = [
+          var.stock_result_queue_arn,
+          var.stock_result_dlq_arn,
         ]
       },
       {
@@ -136,6 +155,25 @@ resource "aws_iam_policy" "product" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      {
+        Sid    = "SQSStockDeductConsume"
+        Effect = "Allow"
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+        ]
+        Resource = [
+          var.stock_deduct_queue_arn,
+          var.stock_deduct_dlq_arn,
+        ]
+      },
+      {
+        Sid    = "SQSStockResultPublish"
+        Effect = "Allow"
+        Action = ["sqs:SendMessage"]
+        Resource = [var.stock_result_queue_arn]
+      },
       {
         Sid    = "S3ImagesBucketAccess"
         Effect = "Allow"

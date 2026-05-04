@@ -74,6 +74,62 @@ module "sqs" {
   environment  = var.environment
 }
 
+# ── Saga 패턴용 재고 차감 큐 ─────────────────────────────────────────
+resource "aws_sqs_queue" "stock_deduct_dlq" {
+  name                      = "${var.project_name}-${var.environment}-stock-deduct-dlq"
+  message_retention_seconds = 1209600
+  sqs_managed_sse_enabled   = true
+  tags = { Name = "${var.project_name}-${var.environment}-stock-deduct-dlq" }
+}
+
+resource "aws_sqs_queue" "stock_deduct" {
+  name                       = "${var.project_name}-${var.environment}-stock-deduct"
+  visibility_timeout_seconds = 30
+  message_retention_seconds  = 86400
+  sqs_managed_sse_enabled    = true
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.stock_deduct_dlq.arn
+    maxReceiveCount     = 3
+  })
+  tags = { Name = "${var.project_name}-${var.environment}-stock-deduct" }
+}
+
+resource "aws_sqs_queue_redrive_allow_policy" "stock_deduct_dlq" {
+  queue_url = aws_sqs_queue.stock_deduct_dlq.id
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "byQueue"
+    sourceQueueArns   = [aws_sqs_queue.stock_deduct.arn]
+  })
+}
+
+# ── Saga 패턴용 재고 차감 결과 큐 ────────────────────────────────────
+resource "aws_sqs_queue" "stock_result_dlq" {
+  name                      = "${var.project_name}-${var.environment}-stock-result-dlq"
+  message_retention_seconds = 1209600
+  sqs_managed_sse_enabled   = true
+  tags = { Name = "${var.project_name}-${var.environment}-stock-result-dlq" }
+}
+
+resource "aws_sqs_queue" "stock_result" {
+  name                       = "${var.project_name}-${var.environment}-stock-result"
+  visibility_timeout_seconds = 30
+  message_retention_seconds  = 86400
+  sqs_managed_sse_enabled    = true
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.stock_result_dlq.arn
+    maxReceiveCount     = 3
+  })
+  tags = { Name = "${var.project_name}-${var.environment}-stock-result" }
+}
+
+resource "aws_sqs_queue_redrive_allow_policy" "stock_result_dlq" {
+  queue_url = aws_sqs_queue.stock_result_dlq.id
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "byQueue"
+    sourceQueueArns   = [aws_sqs_queue.stock_result.arn]
+  })
+}
+
 module "sns" {
   source = "../../modules/sns"
 
@@ -96,8 +152,13 @@ module "iam" {
   sns_topic_arn    = module.sns.topic_arn
   image_bucket_arn = module.s3.image_bucket_arn
 
+  stock_deduct_queue_arn = aws_sqs_queue.stock_deduct.arn
+  stock_deduct_dlq_arn   = aws_sqs_queue.stock_deduct_dlq.arn
+  stock_result_queue_arn = aws_sqs_queue.stock_result.arn
+  stock_result_dlq_arn   = aws_sqs_queue.stock_result_dlq.arn
+
   kubernetes_namespace = var.kubernetes_namespace
-  db_username          = "adminuser" # [추가] RDSProxyIAMAuth 정책 ARN 생성에 필요 (modules/iam/variables.tf 참고)
+  db_username          = "adminuser"
 }
 
 module "cloudfront" {
