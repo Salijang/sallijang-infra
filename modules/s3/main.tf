@@ -83,6 +83,18 @@ resource "aws_s3_bucket_acl" "logs" {
   depends_on = [aws_s3_bucket_ownership_controls.logs]
 }
 
+# ── CORS (images 버킷 — 브라우저 Presigned URL 직접 업로드) ───────────
+resource "aws_s3_bucket_cors_configuration" "images" {
+  bucket = aws_s3_bucket.main["images"].id
+
+  cors_rule {
+    allowed_headers = ["Content-Type"]
+    allowed_methods = ["PUT"]
+    allowed_origins = ["https://sallijang.shop", "https://app.sallijang.shop"]
+    max_age_seconds = 3000
+  }
+}
+
 # ── SSE-S3 암호화 ─────────────────────────────────────────────────────
 resource "aws_s3_bucket_server_side_encryption_configuration" "main" {
   for_each = local.all_buckets
