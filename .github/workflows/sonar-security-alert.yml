@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - develop
+    paths-ignore:
+      - ".github/workflows/trivy-iac-scan.yml"
 
 jobs:
   sonar-security-alert:
