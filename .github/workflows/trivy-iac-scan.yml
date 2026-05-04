@@ -33,4 +33,4 @@ jobs:
           --data "{
             \"text\":\"🚨 Trivy IaC Security Alert\nRepository: sallijang-infra\nHIGH/CRITICAL 인프라 보안 이슈가 발견되었습니다.\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
           }" \
-          "$SLACK_WEBHOOK_URL"
+          "$SLACK_WEBHOOK_URL"  //test
