@@ -203,6 +203,25 @@ resource "aws_iam_policy" "notify" {
     Version = "2012-10-17"
     Statement = [
       {
+        Sid    = "SQSConsume"
+        Effect = "Allow"
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes",
+        ]
+        Resource = [
+          var.sqs_queue_arn,
+          var.sqs_dlq_arn,
+        ]
+      },
+      {
+        Sid      = "SNSPublish"
+        Effect   = "Allow"
+        Action   = ["sns:Publish"]
+        Resource = [var.sns_topic_arn]
+      },
+      {
         Sid      = "SecretsManagerRead"
         Effect   = "Allow"
         Action   = ["secretsmanager:GetSecretValue"]

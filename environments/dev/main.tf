@@ -165,7 +165,8 @@ module "lambda" {
   image_bucket_arn  = module.s3.image_bucket_arn
   sns_topic_arn     = module.sns.topic_arn
 
-  code_s3_bucket           = var.lambda_code_s3_bucket
+  deploy_lambda            = true
+  code_s3_bucket           = module.s3.lambda_bucket_name
   image_resize_code_s3_key = var.image_resize_code_s3_key
   sns_notify_code_s3_key   = var.sns_notify_code_s3_key
 }

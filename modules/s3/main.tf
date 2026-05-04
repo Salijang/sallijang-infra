@@ -6,6 +6,7 @@ locals {
     logs     = { name = "${local.name_prefix}-logs",     versioning = false }
     backup   = { name = "${local.name_prefix}-backup",   versioning = true }
     frontend = { name = "${local.name_prefix}-frontend", versioning = true }
+    lambda   = { name = "${local.name_prefix}-lambda",   versioning = false }
   }
 
   # logs 버킷만 제외 — CloudFront log-delivery-write ACL을 위해 block_public_acls=false 필요

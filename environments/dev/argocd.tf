@@ -27,38 +27,32 @@ resource "helm_release" "argocd" {
 # frontend는 S3/CloudFront로 이관하여 제외.
 
 locals {
-  argocd_services = ["order", "product", "user", "notify"]
+  argocd_services = ["order", "product", "user", "notify", "ingress"]
 }
 
-resource "kubernetes_manifest" "argocd_app" {
+resource "kubectl_manifest" "argocd_app" {
   for_each = toset(local.argocd_services)
 
-  manifest = {
-    apiVersion = "argoproj.io/v1alpha1"
-    kind       = "Application"
-    metadata = {
-      name      = "sallijang-${each.key}"
-      namespace = "argocd"
-    }
-    spec = {
-      project = "default"
-      source = {
-        repoURL        = "https://github.com/Salijang/sallijang-manifest.git"
-        targetRevision = "HEAD"
-        path           = "base/${each.key}"
-      }
-      destination = {
-        server    = "https://kubernetes.default.svc"
-        namespace = "default"
-      }
-      syncPolicy = {
-        automated = {
-          prune     = true
-          selfHeal  = true
-        }
-      }
-    }
-  }
+  yaml_body = <<-YAML
+    apiVersion: argoproj.io/v1alpha1
+    kind: Application
+    metadata:
+      name: sallijang-${each.key}
+      namespace: argocd
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/Salijang/sallijang-manifest.git
+        targetRevision: HEAD
+        path: base/${each.key}
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: default
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+  YAML
 
   depends_on = [helm_release.argocd]
 }
