@@ -56,3 +56,16 @@ variable "lambda_timeout_seconds" {
   description = "Lambda Duration p95 알람 임계 계산용 타임아웃(초). Duration > 80% × timeout일 때 알람."
   default     = 30
 }
+
+# ── Dashboard ─────────────────────────────────────────────────────────
+variable "enable_dashboard" {
+  type        = bool
+  description = "통합 CloudWatch 대시보드 생성 여부."
+  default     = true
+}
+
+variable "aws_region" {
+  type        = string
+  description = "AWS 리전 (Dashboard 위젯의 region 필드에 사용). CloudFront는 항상 us-east-1로 별도 처리."
+  default     = "ap-northeast-2"
+}

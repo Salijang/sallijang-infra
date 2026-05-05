@@ -171,6 +171,8 @@ module "cloudwatch" {
   project_name = var.project_name
   environment  = var.environment
 
+  aws_region = var.aws_region
+
   lambda_function_names = module.lambda.function_names
   log_retention_days    = 30
 
