@@ -17,3 +17,11 @@ output "sns_notify_function_name" {
   description = "SNS 알림 Lambda 함수명"
   value       = local.deploy_lambda ? aws_lambda_function.sns_notify[0].function_name : null
 }
+
+output "function_names" {
+  description = "배포된 Lambda 함수명 리스트 — CloudWatch 모니터링에서 Log Group/Alarm 일괄 처리에 사용"
+  value = local.deploy_lambda ? [
+    aws_lambda_function.image_resize[0].function_name,
+    aws_lambda_function.sns_notify[0].function_name,
+  ] : []
+}

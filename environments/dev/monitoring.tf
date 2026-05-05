@@ -162,3 +162,15 @@ resource "helm_release" "kube_prometheus_stack" {
     kubernetes_storage_class_v1.gp3,
   ]
 }
+
+# ── CloudWatch (AWS 관리형 리소스 모니터링) ───────────────────────────
+# K8s는 위 Prometheus/Grafana, AWS 리소스(RDS/Lambda/ALB/CloudFront)는 CloudWatch로 분리
+module "cloudwatch" {
+  source = "../../modules/cloudwatch"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  lambda_function_names = module.lambda.function_names
+  log_retention_days    = 30
+}
