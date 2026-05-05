@@ -3,6 +3,11 @@ output "rds_endpoint" {
   value       = aws_db_instance.main.endpoint
 }
 
+output "instance_id" {
+  description = "RDS instance identifier (DBInstanceIdentifier) — CloudWatch 알람 dimension에 사용"
+  value       = aws_db_instance.main.identifier
+}
+
 output "rds_port" {
   description = "RDS instance port"
   value       = aws_db_instance.main.port

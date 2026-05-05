@@ -173,4 +173,14 @@ module "cloudwatch" {
 
   lambda_function_names = module.lambda.function_names
   log_retention_days    = 30
+
+  enable_alarms = true
+  sns_topic_arn = module.sns.topic_arn
+
+  rds_instance_id = module.rds.instance_id
+  alb_arn_suffix  = module.alb.arn_suffix
+  cloudfront_distribution_ids = [
+    module.cloudfront.distribution_id,
+    module.cloudfront.frontend_distribution_id,
+  ]
 }
