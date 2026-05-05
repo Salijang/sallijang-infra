@@ -281,3 +281,27 @@ resource "kubernetes_config_map_v1" "grafana_dashboard_cloudwatch_core" {
 
   depends_on = [helm_release.kube_prometheus_stack]
 }
+
+# ── CloudWatch (AWS 관리형 리소스 모니터링) ───────────────────────────
+# K8s는 위 Prometheus/Grafana, AWS 리소스(RDS/Lambda/ALB/CloudFront)는 CloudWatch로 분리
+module "cloudwatch" {
+  source = "../../modules/cloudwatch"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  aws_region = var.aws_region
+
+  lambda_function_names = module.lambda.function_names
+  log_retention_days    = 30
+
+  enable_alarms = true
+  sns_topic_arn = module.sns.topic_arn
+
+  rds_instance_id = module.rds.instance_id
+  alb_arn_suffix  = module.alb.arn_suffix
+  cloudfront_distribution_ids = [
+    module.cloudfront.distribution_id,
+    module.cloudfront.frontend_distribution_id,
+  ]
+}
