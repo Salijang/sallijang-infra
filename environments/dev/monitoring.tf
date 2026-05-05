@@ -7,7 +7,7 @@ locals {
 }
 
 # ── EBS CSI Driver: IRSA Role ──────────────────────────────────────────
-# EKS 1.29에서 PersistentVolume(EBS)을 사용하려면 EBS CSI Driver가 필수입니다.
+# EKS 1.30에서 PersistentVolume(EBS)을 사용하려면 EBS CSI Driver가 필수입니다.
 # IRSA: EBS CSI 컨트롤러 ServiceAccount에 IAM 권한을 부여합니다.
 resource "aws_iam_role" "ebs_csi_driver" {
   name = "${var.project_name}-${var.environment}-ebs-csi-driver-role"

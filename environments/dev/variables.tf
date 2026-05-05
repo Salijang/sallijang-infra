@@ -65,7 +65,7 @@ variable "kubernetes_namespace" {
 
 variable "eks_node_ami_id" {
   type        = string
-  description = "EKS 최적화 AMI ID (Amazon Linux 2, ap-northeast-2). 조회: aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amazon-eks-node-1.29-v*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text"
+  description = "EKS 최적화 AMI ID (Amazon Linux 2, ap-northeast-2). 조회: aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amazon-eks-node-1.30-v*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text"
 }
 
 variable "route53_zone_name" {
