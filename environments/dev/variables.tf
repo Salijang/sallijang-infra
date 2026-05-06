@@ -85,12 +85,3 @@ variable "grafana_admin_password" {
   sensitive   = true
 }
 
-variable "image_resize_code_s3_key" {
-  type    = string
-  default = "lambda/image-resize.zip"
-}
-
-variable "sns_notify_code_s3_key" {
-  type    = string
-  default = "lambda/sns-notify.zip"
-}

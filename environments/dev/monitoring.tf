@@ -305,7 +305,10 @@ module "cloudwatch" {
 
   aws_region = var.aws_region
 
-  lambda_function_names = module.lambda.function_names
+  lambda_function_names = [
+    "${var.project_name}-${var.environment}-image-resize",
+    "${var.project_name}-${var.environment}-sns-notify",
+  ]
   log_retention_days    = 30
 
   enable_alarms = true
