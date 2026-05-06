@@ -181,7 +181,7 @@ resource "aws_sns_topic_subscription" "lambda_notify" {
 # DLQ 메시지 수신 시 sns-notify Lambda가 SNS에 보상 이벤트를 발행합니다.
 # Lambda 코드에서 event.Records[0].eventSource === "aws:sqs" 로 분기처리하세요.
 resource "aws_lambda_event_source_mapping" "dlq_trigger" {
-  count = local.deploy_lambda && var.sqs_dlq_arn != "" ? 1 : 0
+  count = var.deploy_lambda && var.sqs_dlq_arn != "" ? 1 : 0
 
   event_source_arn = var.sqs_dlq_arn
   function_name    = aws_lambda_function.sns_notify[0].arn

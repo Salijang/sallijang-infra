@@ -5,11 +5,13 @@
 locals {
   alarms_enabled = var.enable_alarms
   rds_alarms     = local.alarms_enabled && var.rds_instance_id != ""
-  alb_alarms     = local.alarms_enabled && var.alb_arn_suffix != ""
-  cf_distros     = local.alarms_enabled ? toset(var.cloudfront_distribution_ids) : toset([])
-  lambda_alarms  = toset(local.alarms_enabled ? var.lambda_function_names : [])
-  alarm_actions  = local.alarms_enabled && var.sns_topic_arn != "" ? [var.sns_topic_arn] : []
-  ok_actions     = local.alarm_actions
+  alb_alarm_targets = local.alarms_enabled && var.create_alb_alarms ? {
+    main = var.alb_arn_suffix
+  } : {}
+  cf_distros    = local.alarms_enabled ? var.cloudfront_distribution_ids_by_name : {}
+  lambda_alarms = toset(local.alarms_enabled ? var.lambda_function_names : [])
+  alarm_actions = local.alarms_enabled && var.sns_topic_arn != "" ? [var.sns_topic_arn] : []
+  ok_actions    = local.alarm_actions
   default_tags = {
     Project     = var.project_name
     Environment = var.environment
@@ -153,7 +155,7 @@ resource "aws_cloudwatch_metric_alarm" "lambda_duration_p95" {
 
 # ── ALB ───────────────────────────────────────────────────────────────
 resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
-  count = local.alb_alarms ? 1 : 0
+  for_each = local.alb_alarm_targets
 
   alarm_name          = "${local.name_prefix}-alb-5xx-high"
   alarm_description   = "ALB HTTPCode_ELB_5XX_Count > 10 / 5min"
@@ -166,7 +168,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
   threshold           = 10
   treat_missing_data  = "notBreaching"
 
-  dimensions = { LoadBalancer = var.alb_arn_suffix }
+  dimensions = { LoadBalancer = each.value }
 
   alarm_actions = local.alarm_actions
   ok_actions    = local.ok_actions
@@ -175,7 +177,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
 }
 
 resource "aws_cloudwatch_metric_alarm" "alb_target_response_time" {
-  count = local.alb_alarms ? 1 : 0
+  for_each = local.alb_alarm_targets
 
   alarm_name          = "${local.name_prefix}-alb-target-response-time-p95-high"
   alarm_description   = "ALB TargetResponseTime p95 > 1s"
@@ -188,7 +190,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_target_response_time" {
   threshold           = 1 # seconds
   treat_missing_data  = "notBreaching"
 
-  dimensions = { LoadBalancer = var.alb_arn_suffix }
+  dimensions = { LoadBalancer = each.value }
 
   alarm_actions = local.alarm_actions
   ok_actions    = local.ok_actions

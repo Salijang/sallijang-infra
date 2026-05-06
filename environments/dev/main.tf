@@ -227,18 +227,10 @@ module "lambda" {
   image_bucket_arn  = module.s3.image_bucket_arn
   sns_topic_arn     = module.sns.topic_arn
 
-image_bucket_name = module.s3.image_bucket_name
-  image_bucket_arn  = module.s3.image_bucket_arn
-  sns_topic_arn     = module.sns.topic_arn
-
-  # --- 양쪽 변경사항 통합 ---
-  deploy_lambda   = true
-  sqs_dlq_arn     = module.sqs.dlq_arn
+  deploy_lambda   = false
+  sqs_dlq_arn     = ""
   code_s3_bucket  = module.s3.lambda_bucket_name
-  # -----------------------
 
-  image_resize_code_s3_key = var.image_resize_code_s3_key
-  sns_notify_code_s3_key   = var.sns_notify_code_s3_key
   image_resize_code_s3_key = var.image_resize_code_s3_key
   sns_notify_code_s3_key   = var.sns_notify_code_s3_key
 }
