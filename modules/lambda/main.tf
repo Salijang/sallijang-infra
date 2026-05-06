@@ -2,65 +2,14 @@ locals {
   name_prefix = "${var.project_name}-${var.environment}"
 }
 
-# ═══════════════════════════════════════════════════════════════════════
-# 코드 패키징 & S3 업로드
-# ═══════════════════════════════════════════════════════════════════════
-
-# sharp는 native binary라 Linux x64 플랫폼으로 설치
-resource "null_resource" "npm_install" {
-  triggers = {
-    package_json = filemd5("${var.image_resize_source_dir}/package.json")
-    handler      = filemd5("${var.image_resize_source_dir}/handler.js")
-  }
-
-  provisioner "local-exec" {
-    working_dir = var.image_resize_source_dir
-    command     = "npm install"
-    interpreter = ["bash", "-c"]
-    environment = {
-      npm_config_platform = "linux"
-      npm_config_arch     = "x64"
-    }
-  }
-}
-
-data "archive_file" "image_resize" {
-  depends_on  = [null_resource.npm_install]
-  type        = "zip"
-  source_dir  = var.image_resize_source_dir
-  output_path = "${path.module}/image-resize.zip"
-}
-
-# sns-notify는 표준 라이브러리만 사용 — pip install 불필요
-data "archive_file" "sns_notify" {
-  type        = "zip"
-  source_file = "${var.sns_notify_source_dir}/handler.py"
-  output_path = "${path.module}/sns-notify.zip"
-}
-
-resource "aws_s3_object" "image_resize" {
-  bucket = var.code_s3_bucket
-  key    = "lambda/image-resize.zip"
-  source = data.archive_file.image_resize.output_path
-  etag   = data.archive_file.image_resize.output_md5
-}
-
-resource "aws_s3_object" "sns_notify" {
-  bucket = var.code_s3_bucket
-  key    = "lambda/sns-notify.zip"
-  source = data.archive_file.sns_notify.output_path
-  etag   = data.archive_file.sns_notify.output_md5
-}
-
-# ═══════════════════════════════════════════════════════════════════════
-# Security Group & IAM
-# ═══════════════════════════════════════════════════════════════════════
-
+# ── Security Group ────────────────────────────────────────────────────
 resource "aws_security_group" "lambda" {
+  count       = var.deploy_lambda ? 1 : 0
   name        = "${local.name_prefix}-sg-lambda"
   description = "Lambda function security group"
   vpc_id      = var.vpc_id
 
+  # Lambda는 인바운드 없음 — 이벤트 기반 호출
   egress {
     from_port   = 0
     to_port     = 0
@@ -71,8 +20,10 @@ resource "aws_security_group" "lambda" {
   tags = { Name = "${local.name_prefix}-sg-lambda" }
 }
 
+# ── IAM Execution Role ────────────────────────────────────────────────
 resource "aws_iam_role" "lambda" {
-  name = "${local.name_prefix}-lambda-role"
+  count = var.deploy_lambda ? 1 : 0
+  name  = "${local.name_prefix}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -86,22 +37,26 @@ resource "aws_iam_role" "lambda" {
   tags = { Name = "${local.name_prefix}-lambda-role" }
 }
 
+# VPC 접근 + CloudWatch Logs 기본 권한
 resource "aws_iam_role_policy_attachment" "lambda_vpc" {
-  role       = aws_iam_role.lambda.name
+  count      = var.deploy_lambda ? 1 : 0
+  role       = aws_iam_role.lambda[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
+# 서비스별 추가 권한
 resource "aws_iam_role_policy" "lambda" {
-  name = "${local.name_prefix}-lambda-policy"
-  role = aws_iam_role.lambda.id
+  count = var.deploy_lambda ? 1 : 0
+  name  = "${local.name_prefix}-lambda-policy"
+  role  = aws_iam_role.lambda[0].id
 
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
       {
-        Sid      = "S3ImageAccess"
-        Effect   = "Allow"
-        Action   = ["s3:GetObject", "s3:PutObject"]
+        Sid    = "S3ImageAccess"
+        Effect = "Allow"
+        Action = ["s3:GetObject", "s3:PutObject"]
         Resource = ["${var.image_bucket_arn}/*"]
       },
       {
@@ -124,25 +79,27 @@ resource "aws_iam_role_policy" "lambda" {
   })
 }
 
-# ═══════════════════════════════════════════════════════════════════════
-# Lambda 1: 이미지 리사이징
-# ═══════════════════════════════════════════════════════════════════════
-
+# ── Lambda 1: 이미지 리사이징 ─────────────────────────────────────────
+# S3 products/ 경로에 .jpg 업로드 시 자동 트리거 → 썸네일 생성
 resource "aws_lambda_function" "image_resize" {
+  count         = var.deploy_lambda ? 1 : 0
   function_name = "${local.name_prefix}-image-resize"
-  role          = aws_iam_role.lambda.arn
+  role          = aws_iam_role.lambda[0].arn
   handler       = var.image_resize_handler
   runtime       = var.runtime
   timeout       = var.timeout
   memory_size   = var.memory_size
 
-  s3_bucket        = var.code_s3_bucket
-  s3_key           = aws_s3_object.image_resize.key
-  source_code_hash = data.archive_file.image_resize.output_base64sha256
+  s3_bucket = var.code_s3_bucket
+  s3_key    = var.image_resize_code_s3_key
+
+  tracing_config {
+    mode = "PassThrough"
+  }
 
   vpc_config {
     subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.lambda.id]
+    security_group_ids = [aws_security_group.lambda[0].id]
   }
 
   environment {
@@ -154,19 +111,23 @@ resource "aws_lambda_function" "image_resize" {
   tags = { Name = "${local.name_prefix}-image-resize" }
 }
 
+# S3가 Lambda를 호출할 수 있도록 리소스 기반 정책 추가
 resource "aws_lambda_permission" "s3_invoke" {
+  count         = var.deploy_lambda ? 1 : 0
   statement_id  = "AllowS3Invoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.image_resize.function_name
+  function_name = aws_lambda_function.image_resize[0].function_name
   principal     = "s3.amazonaws.com"
   source_arn    = var.image_bucket_arn
 }
 
+# S3 이벤트 → Lambda 트리거
 resource "aws_s3_bucket_notification" "image_upload" {
+  count  = var.deploy_lambda ? 1 : 0
   bucket = var.image_bucket_name
 
   lambda_function {
-    lambda_function_arn = aws_lambda_function.image_resize.arn
+    lambda_function_arn = aws_lambda_function.image_resize[0].arn
     events              = ["s3:ObjectCreated:*"]
     filter_prefix       = "products/"
   }
@@ -174,25 +135,27 @@ resource "aws_s3_bucket_notification" "image_upload" {
   depends_on = [aws_lambda_permission.s3_invoke]
 }
 
-# ═══════════════════════════════════════════════════════════════════════
-# Lambda 2: SNS 알림 처리
-# ═══════════════════════════════════════════════════════════════════════
-
+# ── Lambda 2: SNS 알림 처리 ───────────────────────────────────────────
+# SNS 토픽 구독 → 카카오 알림톡 / Slack 외부 API 호출
 resource "aws_lambda_function" "sns_notify" {
+  count         = var.deploy_lambda ? 1 : 0
   function_name = "${local.name_prefix}-sns-notify"
-  role          = aws_iam_role.lambda.arn
+  role          = aws_iam_role.lambda[0].arn
   handler       = var.sns_notify_handler
   runtime       = var.sns_notify_runtime
   timeout       = var.timeout
   memory_size   = var.memory_size
 
-  s3_bucket        = var.code_s3_bucket
-  s3_key           = aws_s3_object.sns_notify.key
-  source_code_hash = data.archive_file.sns_notify.output_base64sha256
+  s3_bucket = var.code_s3_bucket
+  s3_key    = var.sns_notify_code_s3_key
+
+  tracing_config {
+    mode = "PassThrough"
+  }
 
   vpc_config {
     subnet_ids         = var.subnet_ids
-    security_group_ids = [aws_security_group.lambda.id]
+    security_group_ids = [aws_security_group.lambda[0].id]
   }
 
   environment {
@@ -204,28 +167,37 @@ resource "aws_lambda_function" "sns_notify" {
   tags = { Name = "${local.name_prefix}-sns-notify" }
 }
 
+# SNS가 Lambda를 호출할 수 있도록 리소스 기반 정책 추가
 resource "aws_lambda_permission" "sns_invoke" {
+  count         = var.deploy_lambda ? 1 : 0
   statement_id  = "AllowSNSInvoke"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.sns_notify.function_name
+  function_name = aws_lambda_function.sns_notify[0].function_name
   principal     = "sns.amazonaws.com"
   source_arn    = var.sns_topic_arn
 }
 
+# SNS 토픽 → Lambda 구독 등록
 resource "aws_sns_topic_subscription" "lambda_notify" {
+  count     = var.deploy_lambda ? 1 : 0
   topic_arn = var.sns_topic_arn
   protocol  = "lambda"
-  endpoint  = aws_lambda_function.sns_notify.arn
+  endpoint  = aws_lambda_function.sns_notify[0].arn
 }
 
+# ── DLQ → sns-notify Lambda (보상 이벤트) ────────────────────────────
+# DLQ 메시지 수신 시 sns-notify Lambda가 SNS에 보상 이벤트를 발행합니다.
+# Lambda 코드에서 event.Records[0].eventSource === "aws:sqs" 로 분기처리하세요.
 resource "aws_lambda_event_source_mapping" "dlq_trigger" {
-  count = var.sqs_dlq_arn != "" ? 1 : 0
+  count = var.deploy_lambda && var.sqs_dlq_arn != "" ? 1 : 0
 
   event_source_arn = var.sqs_dlq_arn
-  function_name    = aws_lambda_function.sns_notify.arn
+  function_name    = aws_lambda_function.sns_notify[0].arn
 
+  # DLQ는 배치 1개씩 처리 — 보상 이벤트마다 독립 트랜잭션
   batch_size                         = 1
   maximum_batching_window_in_seconds = 0
 
+  # Lambda 처리 실패 시 메시지를 DLQ에서 즉시 삭제하지 않고 재시도
   function_response_types = ["ReportBatchItemFailures"]
 }

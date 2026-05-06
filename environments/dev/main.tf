@@ -227,11 +227,12 @@ module "lambda" {
   image_bucket_arn  = module.s3.image_bucket_arn
   sns_topic_arn     = module.sns.topic_arn
 
-  code_s3_bucket          = module.s3.lambda_bucket_name
-  image_resize_source_dir = "${path.root}/../../../sallijang-backend-product/lambda/image-resize"
-  sns_notify_source_dir   = "${path.root}/../../../sallijang-backend-notify/lambda"
+  deploy_lambda   = false
+  sqs_dlq_arn     = ""
+  code_s3_bucket  = module.s3.lambda_bucket_name
 
-  sqs_dlq_arn = ""
+  image_resize_code_s3_key = var.image_resize_code_s3_key
+  sns_notify_code_s3_key   = var.sns_notify_code_s3_key
 }
 
 module "alb" {
