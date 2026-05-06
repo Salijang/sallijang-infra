@@ -45,10 +45,22 @@ variable "alb_arn_suffix" {
   default     = ""
 }
 
+variable "create_alb_alarms" {
+  type        = bool
+  description = "ALB 알람 생성 여부. alb_arn_suffix 값의 plan 시점 확정 여부와 분리하기 위한 정적 플래그."
+  default     = false
+}
+
 variable "cloudfront_distribution_ids" {
   type        = list(string)
   description = "감시 대상 CloudFront Distribution ID 리스트. 비어있으면 CloudFront 알람 미생성."
   default     = []
+}
+
+variable "cloudfront_distribution_ids_by_name" {
+  type        = map(string)
+  description = "CloudFront 알람용 Distribution ID 맵. 키는 정적으로 고정하고 값만 apply 시점이어도 됨."
+  default     = {}
 }
 
 variable "lambda_timeout_seconds" {
