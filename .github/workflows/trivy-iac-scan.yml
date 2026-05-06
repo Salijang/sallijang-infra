@@ -34,4 +34,4 @@ jobs:
           --data "{
             \"text\":\"🏗️ *Trivy IaC Security Alert*\n<@U0A5JHMDY49> <@U0A53JU406S>\nRepository: sallijang-*infra*\n${ISSUE}\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
           }" \
-          "$SLACK_WEBHOOK_URL"
+          "$SLACK_WEBHOOK_URL"  //test
