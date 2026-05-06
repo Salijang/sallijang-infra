@@ -4,9 +4,6 @@ AVD-AWS-0053
 # AWS-0054: HTTP 리스너 — HTTPS 301 리다이렉트 전용으로 false positive
 AVD-AWS-0054
 
-# AWS-0011: CloudFront WAF 미적용 — 비용 및 복잡도 고려하여 의도적 미적용
-AVD-AWS-0011
-
 # AWS-0040: EKS public endpoint — kubectl 접근을 위해 의도적으로 허용
 AVD-AWS-0040
 

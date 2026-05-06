@@ -4,6 +4,65 @@ locals {
   app_domain  = "app.${var.domain_name}"
 }
 
+# ── WAF Web ACL (CloudFront용 — us-east-1 필수) ───────────────────────
+resource "aws_wafv2_web_acl" "cloudfront" {
+  provider    = aws.us_east_1
+  name        = "${local.name_prefix}-cloudfront-waf"
+  scope       = "CLOUDFRONT"
+
+  default_action {
+    allow {}
+  }
+
+  rule {
+    name     = "AWSManagedRulesCommonRuleSet"
+    priority = 1
+
+    override_action { none {} }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesCommonRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${local.name_prefix}-waf-common"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  rule {
+    name     = "AWSManagedRulesKnownBadInputsRuleSet"
+    priority = 2
+
+    override_action { none {} }
+
+    statement {
+      managed_rule_group_statement {
+        name        = "AWSManagedRulesKnownBadInputsRuleSet"
+        vendor_name = "AWS"
+      }
+    }
+
+    visibility_config {
+      cloudwatch_metrics_enabled = true
+      metric_name                = "${local.name_prefix}-waf-bad-inputs"
+      sampled_requests_enabled   = true
+    }
+  }
+
+  visibility_config {
+    cloudwatch_metrics_enabled = true
+    metric_name                = "${local.name_prefix}-cloudfront-waf"
+    sampled_requests_enabled   = true
+  }
+
+  tags = { Name = "${local.name_prefix}-cloudfront-waf" }
+}
+
 # ═══════════════════════════════════════════════════════════════════════
 # 이미지 CDN (기존)
 # ═══════════════════════════════════════════════════════════════════════
@@ -83,6 +142,7 @@ resource "aws_cloudfront_distribution" "main" {
   aliases             = [local.cdn_domain]
   http_version        = "http2and3"
   wait_for_deployment = false
+  web_acl_id          = aws_wafv2_web_acl.cloudfront.arn
 
   origin {
     domain_name              = var.image_bucket_regional_domain_name
@@ -263,6 +323,7 @@ resource "aws_cloudfront_distribution" "frontend" {
   http_version        = "http2and3"
   default_root_object = "index.html"
   wait_for_deployment = false
+  web_acl_id          = aws_wafv2_web_acl.cloudfront.arn
 
   origin {
     domain_name              = var.frontend_bucket_regional_domain_name
