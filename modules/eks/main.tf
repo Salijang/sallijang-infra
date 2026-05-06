@@ -142,6 +142,30 @@ resource "aws_security_group_rule" "cp_to_node_https" {
   source_security_group_id = aws_security_group.control_plane.id
 }
 
+# 컨트롤 플레인 → 워커 노드: admission webhook (8443)
+# ingress-nginx 등 admission webhook이 8443 포트를 사용하며,
+# 이 규칙이 없으면 ArgoCD/kubectl apply 시 webhook timeout 발생
+resource "aws_security_group_rule" "cp_to_node_webhook" {
+  type                     = "ingress"
+  from_port                = 8443
+  to_port                  = 8443
+  protocol                 = "tcp"
+  description              = "Control plane to node: admission webhook"
+  security_group_id        = aws_security_group.node.id
+  source_security_group_id = aws_security_group.control_plane.id
+}
+
+# EKS cluster SG → 워커 노드: admission webhook (8443)
+resource "aws_security_group_rule" "cluster_sg_to_node_webhook" {
+  type              = "ingress"
+  from_port         = 8443
+  to_port           = 8443
+  protocol          = "tcp"
+  description       = "EKS cluster SG to node: admission webhook"
+  security_group_id = aws_security_group.node.id
+  cidr_blocks       = [data.aws_vpc.main.cidr_block]
+}
+
 # 컨트롤 플레인 → 워커 노드: DNS TCP (53)
 resource "aws_security_group_rule" "cp_to_node_dns_tcp" {
   type                     = "ingress"
