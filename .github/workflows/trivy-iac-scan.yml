@@ -22,7 +22,7 @@ jobs:
           scan-type: config
           severity: HIGH,CRITICAL
           exit-code: 1
-
+  
       - name: Send Slack alert on Trivy failure
         if: failure()
         env:
@@ -32,6 +32,6 @@ jobs:
       
           curl -X POST -H 'Content-type: application/json' \
           --data "{
-            \"text\":\"🏗️ *Trivy IaC Security Alert*\n<@황현민ID> <@송우민ID>\nRepository: sallijang-*infra*\n${ISSUE}\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            \"text\":\"🏗️ *Trivy IaC Security Alert*\n<@U0A5JHMDY49> <@U0A53JU406S>\nRepository: sallijang-*infra*\n${ISSUE}\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
           }" \
           "$SLACK_WEBHOOK_URL"
