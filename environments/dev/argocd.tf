@@ -22,9 +22,8 @@ resource "helm_release" "argocd" {
 }
 
 # ── ArgoCD Applications ───────────────────────────────────────────────
-# sallijang-manifest 레포의 base/<service> 경로를 자동 동기화.
+# sallijang-manifest 레포의 dev/<service> 경로를 자동 동기화.
 # CI/CD가 이미지 태그를 업데이트하면 ArgoCD가 감지하여 자동 배포.
-# frontend는 S3/CloudFront로 이관하여 제외.
 
 locals {
   argocd_services = ["order", "product", "user", "notify", "ingress"]
@@ -44,7 +43,7 @@ resource "kubectl_manifest" "argocd_app" {
       source:
         repoURL: https://github.com/Salijang/sallijang-manifest.git
         targetRevision: HEAD
-        path: base/${each.key}
+        path: dev/${each.key}
       destination:
         server: https://kubernetes.default.svc
         namespace: default
