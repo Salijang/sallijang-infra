@@ -27,6 +27,7 @@ jobs:
           output: trivy-results.txt
           severity: HIGH,CRITICAL
           exit-code: 1
+           trivyignores: .trivyignore 
 
       - name: Print Trivy result
         if: always()
