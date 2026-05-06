@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main
-      - develop
-    paths-ignore:
-      - ".github/workflows/trivy-iac-scan.yml"
+    paths:
+      - 'src/**'
+      - 'app/**'
+      - '.github/workflows/sonar-security-alert.yml'
 
 jobs:
   sonar-security-alert:
