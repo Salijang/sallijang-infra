@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**/*.tf'
+      - '.github/workflows/trivy-iac-scan.yml'
 
 jobs:
   trivy-iac:
@@ -14,19 +17,41 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Trivy IaC scan
+        id: trivy_scan
         uses: aquasecurity/trivy-action@v0.20.0
+        continue-on-error: true
         with:
           scan-type: config
+          scan-ref: .
+          format: table
+          output: trivy-results.txt
           severity: HIGH,CRITICAL
           exit-code: 1
 
+      - name: Print Trivy result
+        if: always()
+        run: |
+          if [ -f trivy-results.txt ]; then
+            cat trivy-results.txt
+          else
+            echo "trivy-results.txt file was not created."
+          fi
+
       - name: Send Slack alert on Trivy failure
-        if: failure()
+        if: steps.trivy_scan.outcome == 'failure'
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
+          ISSUE=$(grep -m 1 "HIGH:" trivy-results.txt || grep -m 1 "CRITICAL:" trivy-results.txt || echo "HIGH/CRITICAL 인프라 보안 이슈가 발견되었습니다.")
+
           curl -X POST -H 'Content-type: application/json' \
           --data "{
-            \"text\":\"🚨 Trivy IaC Security Alert\nRepository: sallijang-infra\nHIGH/CRITICAL 인프라 보안 이슈 발견됨\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            \"text\":\"🏗️ *Trivy IaC Security Alert*\n<@U0A53JU406S> <@U0A5JHMDY49>\nRepository: sallijang-*infra*\n${ISSUE}\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
           }" \
           "$SLACK_WEBHOOK_URL"
+
+      - name: Fail pipeline if Trivy found issues
+        if: steps.trivy_scan.outcome == 'failure'
+        run: |
+          echo "Trivy found HIGH/CRITICAL IaC security issues. Failing pipeline."
+          exit 1

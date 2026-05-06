@@ -17,7 +17,7 @@ eks_node_ami_id = "ami-0cfd22eb40ec9c95a"
 # dev는 어디서든 접근 가능하도록 열어 둠 (학습/테스트 환경)
 eks_public_access_cidrs = ["0.0.0.0/0"]
 
-domain_name       = "api.sallijang.shop"
+domain_name       = "sallijang.shop"
 hosted_zone_id    = "Z076739714CV5CNEDIAMO"
 certificate_arn   = "arn:aws:acm:ap-northeast-2:594486941613:certificate/13988de3-1356-4c12-ad6d-72edfbfd11d4"
 node_port         = 30080
@@ -28,5 +28,3 @@ route53_zone_name = "sallijang.shop"
 # lambda_code_s3_bucket    = "pickup-dev-lambda-code"
 # image_resize_code_s3_key = "lambda/image-resize.zip"
 # sns_notify_code_s3_key   = "lambda/sns-notify.zip"
-image_resize_code_s3_key = "lambda/image-resize.zip"
-sns_notify_code_s3_key   = "lambda/sns-notify.zip"

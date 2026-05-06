@@ -4,9 +4,10 @@ on:
   push:
     branches:
       - main
-      - develop
-    paths-ignore:
-      - ".github/workflows/trivy-iac-scan.yml"
+    paths:
+      - 'src/**'
+      - 'app/**'
+      - '.github/workflows/sonar-security-alert.yml'
 
 jobs:
   sonar-security-alert:
@@ -53,11 +54,11 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           COUNT=$(curl -s -u "$SONAR_TOKEN:" \
-          "https://sonarcloud.io/api/issues/search?componentKeys=Salijang_sallijang-infra&types=VULNERABILITY&resolved=false" \
+          "https://sonarcloud.io/api/issues/search?componentKeys=Salijang_sallijang-infra&types=VULNERABILITY&severities=BLOCKER,CRITICAL&resolved=false" \
           | jq '.total')
 
           echo "COUNT=$COUNT" >> $GITHUB_ENV
-          echo "Security Issues: $COUNT"
+          echo "High/Critical Security Issues: $COUNT"
 
       - name: Send Slack Alert
         if: env.COUNT != '0'
@@ -66,6 +67,6 @@ jobs:
         run: |
           curl -X POST -H 'Content-type: application/json' \
           --data "{
-            \"text\":\"🚨 SonarQube Security Alert\nRepository: sallijang-infra\nOpen Security Issues: ${COUNT}건\nhttps://sonarcloud.io/project/overview?id=Salijang_sallijang-infra\"
+            \"text\":\"🛡️ SonarQube Security Alert\n@송우민 @황현민\nRepository: sallijang-*infra*\nHigh/Critical Security Issues: ${COUNT}건\nhttps://sonarcloud.io/project/overview?id=Salijang_sallijang-infra\"
           }" \
-          "$SLACK_WEBHOOK_URL" //retestt
+          "$SLACK_WEBHOOK_URL"
