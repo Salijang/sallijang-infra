@@ -4,7 +4,8 @@ locals {
 
 # ── SNS 토픽 ──────────────────────────────────────────────────────────
 resource "aws_sns_topic" "main" {
-  name = "${local.name_prefix}-notification"
+  name              = "${local.name_prefix}-notification"
+  kms_master_key_id = "alias/aws/sns"
 
   # 전송 실패 메시지 보관 (CloudWatch Logs)
   sqs_failure_feedback_role_arn    = aws_iam_role.sns_feedback.arn
