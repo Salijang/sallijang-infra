@@ -99,6 +99,40 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = [
           "arn:aws:s3:::pickup-*-lambda-code/*"
         ]
+      },
+      {
+        # Terraform 원격 상태 버킷 ListBucket (terraform init 필수)
+        Sid    = "TerraformStateList"
+        Effect = "Allow"
+        Action = ["s3:ListBucket"]
+        Resource = [
+          "arn:aws:s3:::pickup-prod-terraform-state",
+          "arn:aws:s3:::pickup-dev-terraform-state"
+        ]
+      },
+      {
+        # Terraform 원격 상태 파일 읽기/쓰기
+        Sid    = "TerraformStateReadWrite"
+        Effect = "Allow"
+        Action = ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"]
+        Resource = [
+          "arn:aws:s3:::pickup-prod-terraform-state/*",
+          "arn:aws:s3:::pickup-dev-terraform-state/*"
+        ]
+      },
+      {
+        # Terraform state lock (DynamoDB)
+        Sid    = "TerraformStateLock"
+        Effect = "Allow"
+        Action = [
+          "dynamodb:GetItem",
+          "dynamodb:PutItem",
+          "dynamodb:DeleteItem"
+        ]
+        Resource = [
+          "arn:aws:dynamodb:ap-northeast-2:594486941613:table/pickup-prod-terraform-lock",
+          "arn:aws:dynamodb:ap-northeast-2:594486941613:table/pickup-dev-terraform-lock"
+        ]
       }
     ]
   })

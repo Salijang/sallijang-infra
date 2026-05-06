@@ -52,4 +52,3 @@ spec:
 
   tags:
     managed-by: karpenter
-    kubernetes.io/cluster/pickup-dev-eks-cluster: owned

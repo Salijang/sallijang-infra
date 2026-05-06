@@ -93,6 +93,10 @@ resource "aws_lambda_function" "image_resize" {
   s3_bucket = var.code_s3_bucket
   s3_key    = var.image_resize_code_s3_key
 
+  tracing_config {
+    mode = "PassThrough"
+  }
+
   vpc_config {
     subnet_ids         = var.subnet_ids
     security_group_ids = [aws_security_group.lambda[0].id]
@@ -144,6 +148,10 @@ resource "aws_lambda_function" "sns_notify" {
 
   s3_bucket = var.code_s3_bucket
   s3_key    = var.sns_notify_code_s3_key
+
+  tracing_config {
+    mode = "PassThrough"
+  }
 
   vpc_config {
     subnet_ids         = var.subnet_ids
