@@ -92,3 +92,9 @@ variable "sns_notify_runtime" {
   description = "SNS notify Lambda 런타임 (Python 코드)"
   default     = "python3.11"
 }
+
+variable "sqs_dlq_arn" {
+  type        = string
+  description = "DLQ ARN — sns-notify Lambda의 이벤트 소스로 등록하여 보상 이벤트를 발행합니다. 비우면 DLQ 트리거 미생성."
+  default     = ""
+}

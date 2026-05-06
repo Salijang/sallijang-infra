@@ -64,6 +64,11 @@ variable "eks_node_ami_id" {
   description = "EKS 최적화 AMI ID (Amazon Linux 2, ap-northeast-2)"
 }
 
+variable "eks_public_access_cidrs" {
+  type        = list(string)
+  description = "EKS API 서버 퍼블릭 접근 허용 CIDR. prod는 사무실/VPN IP로 제한 필수. 0.0.0.0/0 사용 금지."
+}
+
 variable "route53_zone_name" {
   type    = string
   default = ""

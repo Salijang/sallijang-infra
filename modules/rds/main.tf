@@ -132,9 +132,10 @@ resource "aws_db_instance" "main" {
   engine_version = "16"
   instance_class = var.instance_class
 
-  allocated_storage = var.allocated_storage
-  storage_type      = "gp3"
-  storage_encrypted = true
+  allocated_storage     = var.allocated_storage
+  max_allocated_storage = var.max_allocated_storage > 0 ? var.max_allocated_storage : null
+  storage_type          = "gp3"
+  storage_encrypted     = true
 
   db_name  = var.db_name
   username = var.db_username
@@ -162,7 +163,7 @@ resource "aws_db_instance" "read_replica" {
   count = var.enable_read_replica ? 1 : 0
 
   identifier          = "${local.name_prefix}-rds-replica"
-  replicate_source_db = aws_db_instance.main.identifier
+  replicate_source_db = aws_db_instance.main.arn
   instance_class      = var.instance_class
   availability_zone   = "ap-northeast-2c"
 

@@ -14,7 +14,10 @@ data_subnet_cidrs     = ["10.0.7.0/24", "10.0.8.0/24"]
 # 업데이트 필요 시: aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amazon-eks-node-1.29-v*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text
 eks_node_ami_id = "ami-0cfd22eb40ec9c95a"
 
-domain_name       = "sallijang.shop"
+# dev는 어디서든 접근 가능하도록 열어 둠 (학습/테스트 환경)
+eks_public_access_cidrs = ["0.0.0.0/0"]
+
+domain_name       = "api.sallijang.shop"
 hosted_zone_id    = "Z076739714CV5CNEDIAMO"
 certificate_arn   = "arn:aws:acm:ap-northeast-2:594486941613:certificate/13988de3-1356-4c12-ad6d-72edfbfd11d4"
 node_port         = 30080

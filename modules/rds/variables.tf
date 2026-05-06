@@ -45,6 +45,12 @@ variable "allocated_storage" {
   default     = 20
 }
 
+variable "max_allocated_storage" {
+  type        = number
+  description = "스토리지 자동 확장 상한 GB. 0이면 autoscaling 비활성화. prod는 반드시 설정."
+  default     = 0
+}
+
 variable "db_name" {
   type        = string
   description = "Database name"

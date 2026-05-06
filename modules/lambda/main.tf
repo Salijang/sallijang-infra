@@ -64,6 +64,16 @@ resource "aws_iam_role_policy" "lambda" {
         Effect   = "Allow"
         Action   = ["sns:Publish"]
         Resource = [var.sns_topic_arn]
+      },
+      {
+        Sid    = "DLQConsume"
+        Effect = "Allow"
+        Action = [
+          "sqs:ReceiveMessage",
+          "sqs:DeleteMessage",
+          "sqs:GetQueueAttributes"
+        ]
+        Resource = [var.sqs_dlq_arn != "" ? var.sqs_dlq_arn : "arn:aws:sqs:*:*:placeholder"]
       }
     ]
   })
@@ -165,4 +175,21 @@ resource "aws_sns_topic_subscription" "lambda_notify" {
   topic_arn = var.sns_topic_arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.sns_notify[0].arn
+}
+
+# ── DLQ → sns-notify Lambda (보상 이벤트) ────────────────────────────
+# DLQ 메시지 수신 시 sns-notify Lambda가 SNS에 보상 이벤트를 발행합니다.
+# Lambda 코드에서 event.Records[0].eventSource === "aws:sqs" 로 분기처리하세요.
+resource "aws_lambda_event_source_mapping" "dlq_trigger" {
+  count = local.deploy_lambda && var.sqs_dlq_arn != "" ? 1 : 0
+
+  event_source_arn = var.sqs_dlq_arn
+  function_name    = aws_lambda_function.sns_notify[0].arn
+
+  # DLQ는 배치 1개씩 처리 — 보상 이벤트마다 독립 트랜잭션
+  batch_size                         = 1
+  maximum_batching_window_in_seconds = 0
+
+  # Lambda 처리 실패 시 메시지를 DLQ에서 즉시 삭제하지 않고 재시도
+  function_response_types = ["ReportBatchItemFailures"]
 }

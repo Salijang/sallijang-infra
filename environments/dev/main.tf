@@ -55,8 +55,9 @@ module "eks" {
   eks_subnet_ids = module.vpc.eks_subnet_ids
   eks_sg_id      = module.vpc.eks_sg_id
 
-  node_ami_id       = var.eks_node_ami_id
-  target_group_arns = [module.alb.target_group_arn]
+  node_ami_id          = var.eks_node_ami_id
+  public_access_cidrs  = var.eks_public_access_cidrs
+  target_group_arns    = [module.alb.target_group_arn]
 }
 
 module "s3" {
@@ -226,8 +227,18 @@ module "lambda" {
   image_bucket_arn  = module.s3.image_bucket_arn
   sns_topic_arn     = module.sns.topic_arn
 
-  deploy_lambda            = true
-  code_s3_bucket           = module.s3.lambda_bucket_name
+image_bucket_name = module.s3.image_bucket_name
+  image_bucket_arn  = module.s3.image_bucket_arn
+  sns_topic_arn     = module.sns.topic_arn
+
+  # --- 양쪽 변경사항 통합 ---
+  deploy_lambda   = true
+  sqs_dlq_arn     = module.sqs.dlq_arn
+  code_s3_bucket  = module.s3.lambda_bucket_name
+  # -----------------------
+
+  image_resize_code_s3_key = var.image_resize_code_s3_key
+  sns_notify_code_s3_key   = var.sns_notify_code_s3_key
   image_resize_code_s3_key = var.image_resize_code_s3_key
   sns_notify_code_s3_key   = var.sns_notify_code_s3_key
 }

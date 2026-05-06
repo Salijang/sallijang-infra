@@ -68,6 +68,11 @@ variable "eks_node_ami_id" {
   description = "EKS 최적화 AMI ID (Amazon Linux 2, ap-northeast-2). 조회: aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amazon-eks-node-1.30-v*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text"
 }
 
+variable "eks_public_access_cidrs" {
+  type        = list(string)
+  description = "EKS API 서버 퍼블릭 접근 허용 CIDR. dev는 0.0.0.0/0 허용, prod는 사무실/VPN IP로 제한 필수."
+}
+
 variable "route53_zone_name" {
   type        = string
   description = "Route53 hosted zone의 apex 도메인 (e.g. sallijang.shop). ALB alias A 레코드 생성에 사용."
