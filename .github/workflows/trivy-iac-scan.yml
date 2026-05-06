@@ -30,6 +30,6 @@ jobs:
         run: |
           curl -X POST -H 'Content-type: application/json' \
           --data "{
-            \"text\":\"🚨 Trivy IaC Security Alert\nRepository: sallijang-infra\nHIGH/CRITICAL 인프라 보안 이슈 발견됨\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            \"text\":\"🏗️ *Trivy IaC Security Alert*\n<@U0A53JU406S> <@U0A5JHMDY49>\nRepository: sallijang-*infra*\nHIGH/CRITICAL 인프라 보안 이슈 발견됨\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
           }" \
           "$SLACK_WEBHOOK_URL"
