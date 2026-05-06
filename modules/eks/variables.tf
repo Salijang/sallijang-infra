@@ -28,7 +28,7 @@ variable "eks_sg_id" {
 variable "cluster_version" {
   type        = string
   description = "EKS 클러스터 버전"
-  default     = "1.29"
+  default     = "1.30"
 }
 
 variable "public_access_cidrs" {

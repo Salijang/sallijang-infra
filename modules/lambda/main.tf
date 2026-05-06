@@ -1,11 +1,10 @@
 locals {
-  name_prefix   = "${var.project_name}-${var.environment}"
-  deploy_lambda = var.code_s3_bucket != ""
+  name_prefix = "${var.project_name}-${var.environment}"
 }
 
 # ── Security Group ────────────────────────────────────────────────────
 resource "aws_security_group" "lambda" {
-  count       = local.deploy_lambda ? 1 : 0
+  count       = var.deploy_lambda ? 1 : 0
   name        = "${local.name_prefix}-sg-lambda"
   description = "Lambda function security group"
   vpc_id      = var.vpc_id
@@ -23,7 +22,7 @@ resource "aws_security_group" "lambda" {
 
 # ── IAM Execution Role ────────────────────────────────────────────────
 resource "aws_iam_role" "lambda" {
-  count = local.deploy_lambda ? 1 : 0
+  count = var.deploy_lambda ? 1 : 0
   name  = "${local.name_prefix}-lambda-role"
 
   assume_role_policy = jsonencode({
@@ -40,14 +39,14 @@ resource "aws_iam_role" "lambda" {
 
 # VPC 접근 + CloudWatch Logs 기본 권한
 resource "aws_iam_role_policy_attachment" "lambda_vpc" {
-  count      = local.deploy_lambda ? 1 : 0
+  count      = var.deploy_lambda ? 1 : 0
   role       = aws_iam_role.lambda[0].name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
 # 서비스별 추가 권한
 resource "aws_iam_role_policy" "lambda" {
-  count = local.deploy_lambda ? 1 : 0
+  count = var.deploy_lambda ? 1 : 0
   name  = "${local.name_prefix}-lambda-policy"
   role  = aws_iam_role.lambda[0].id
 
@@ -83,7 +82,7 @@ resource "aws_iam_role_policy" "lambda" {
 # ── Lambda 1: 이미지 리사이징 ─────────────────────────────────────────
 # S3 products/ 경로에 .jpg 업로드 시 자동 트리거 → 썸네일 생성
 resource "aws_lambda_function" "image_resize" {
-  count         = local.deploy_lambda ? 1 : 0
+  count         = var.deploy_lambda ? 1 : 0
   function_name = "${local.name_prefix}-image-resize"
   role          = aws_iam_role.lambda[0].arn
   handler       = var.image_resize_handler
@@ -110,7 +109,7 @@ resource "aws_lambda_function" "image_resize" {
 
 # S3가 Lambda를 호출할 수 있도록 리소스 기반 정책 추가
 resource "aws_lambda_permission" "s3_invoke" {
-  count         = local.deploy_lambda ? 1 : 0
+  count         = var.deploy_lambda ? 1 : 0
   statement_id  = "AllowS3Invoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.image_resize[0].function_name
@@ -120,7 +119,7 @@ resource "aws_lambda_permission" "s3_invoke" {
 
 # S3 이벤트 → Lambda 트리거
 resource "aws_s3_bucket_notification" "image_upload" {
-  count  = local.deploy_lambda ? 1 : 0
+  count  = var.deploy_lambda ? 1 : 0
   bucket = var.image_bucket_name
 
   lambda_function {
@@ -135,11 +134,11 @@ resource "aws_s3_bucket_notification" "image_upload" {
 # ── Lambda 2: SNS 알림 처리 ───────────────────────────────────────────
 # SNS 토픽 구독 → 카카오 알림톡 / Slack 외부 API 호출
 resource "aws_lambda_function" "sns_notify" {
-  count         = local.deploy_lambda ? 1 : 0
+  count         = var.deploy_lambda ? 1 : 0
   function_name = "${local.name_prefix}-sns-notify"
   role          = aws_iam_role.lambda[0].arn
   handler       = var.sns_notify_handler
-  runtime       = var.runtime
+  runtime       = var.sns_notify_runtime
   timeout       = var.timeout
   memory_size   = var.memory_size
 
@@ -162,7 +161,7 @@ resource "aws_lambda_function" "sns_notify" {
 
 # SNS가 Lambda를 호출할 수 있도록 리소스 기반 정책 추가
 resource "aws_lambda_permission" "sns_invoke" {
-  count         = local.deploy_lambda ? 1 : 0
+  count         = var.deploy_lambda ? 1 : 0
   statement_id  = "AllowSNSInvoke"
   action        = "lambda:InvokeFunction"
   function_name = aws_lambda_function.sns_notify[0].function_name
@@ -172,7 +171,7 @@ resource "aws_lambda_permission" "sns_invoke" {
 
 # SNS 토픽 → Lambda 구독 등록
 resource "aws_sns_topic_subscription" "lambda_notify" {
-  count     = local.deploy_lambda ? 1 : 0
+  count     = var.deploy_lambda ? 1 : 0
   topic_arn = var.sns_topic_arn
   protocol  = "lambda"
   endpoint  = aws_lambda_function.sns_notify[0].arn

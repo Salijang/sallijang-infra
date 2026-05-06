@@ -7,7 +7,7 @@ locals {
 }
 
 # ── EBS CSI Driver: IRSA Role ──────────────────────────────────────────
-# EKS 1.29에서 PersistentVolume(EBS)을 사용하려면 EBS CSI Driver가 필수입니다.
+# EKS 1.30에서 PersistentVolume(EBS)을 사용하려면 EBS CSI Driver가 필수입니다.
 # IRSA: EBS CSI 컨트롤러 ServiceAccount에 IAM 권한을 부여합니다.
 resource "aws_iam_role" "ebs_csi_driver" {
   name = "${var.project_name}-${var.environment}-ebs-csi-driver-role"
@@ -33,6 +33,71 @@ resource "aws_iam_role" "ebs_csi_driver" {
 resource "aws_iam_role_policy_attachment" "ebs_csi_driver" {
   role       = aws_iam_role.ebs_csi_driver.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+}
+
+# ── Grafana: CloudWatch 조회용 IRSA Role ──────────────────────────────
+resource "aws_iam_role" "grafana_cloudwatch" {
+  name = "${var.project_name}-${var.environment}-grafana-cloudwatch-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = module.eks.oidc_provider_arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${local.oidc_issuer_host}:sub" = "system:serviceaccount:default:kube-prometheus-stack-grafana"
+          "${local.oidc_issuer_host}:aud" = "sts.amazonaws.com"
+        }
+      }
+    }]
+  })
+
+  tags = { Name = "${var.project_name}-${var.environment}-grafana-cloudwatch-role" }
+}
+
+resource "aws_iam_policy" "grafana_cloudwatch" {
+  name = "${var.project_name}-${var.environment}-grafana-cloudwatch-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Sid    = "CloudWatchRead"
+      Effect = "Allow"
+      Action = [
+        "cloudwatch:DescribeAlarms",
+        "cloudwatch:DescribeAlarmsForMetric",
+        "cloudwatch:DescribeAlarmHistory",
+        "cloudwatch:GetMetricData",
+        "cloudwatch:GetMetricStatistics",
+        "cloudwatch:ListMetrics",
+        "logs:DescribeLogGroups",
+        "logs:GetLogGroupFields",
+        "logs:StartQuery",
+        "logs:StopQuery",
+        "logs:GetQueryResults",
+        "logs:GetLogEvents",
+        "logs:FilterLogEvents",
+        "ec2:DescribeRegions",
+        "ec2:DescribeInstances",
+        "ec2:DescribeTags",
+        "tag:GetResources",
+      ]
+      Resource = ["*"]
+    }]
+  })
+
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "grafana_cloudwatch" {
+  role       = aws_iam_role.grafana_cloudwatch.name
+  policy_arn = aws_iam_policy.grafana_cloudwatch.arn
 }
 
 # ── EKS Addon: EBS CSI Driver ─────────────────────────────────────────
@@ -149,6 +214,52 @@ resource "helm_release" "kube_prometheus_stack" {
     value = "ClusterIP"
   }
 
+  # ── Grafana ServiceAccount + CloudWatch DataSource ───────────────────
+  set {
+    name  = "grafana.serviceAccount.create"
+    value = "true"
+  }
+  set {
+    name  = "grafana.serviceAccount.name"
+    value = "kube-prometheus-stack-grafana"
+  }
+  set {
+    name  = "grafana.serviceAccount.annotations.eks\\.amazonaws\\.com/role-arn"
+    value = aws_iam_role.grafana_cloudwatch.arn
+  }
+  set {
+    name  = "grafana.additionalDataSources[0].name"
+    value = "CloudWatch"
+  }
+  set {
+    name  = "grafana.additionalDataSources[0].uid"
+    value = "cloudwatch"
+  }
+  set {
+    name  = "grafana.additionalDataSources[0].type"
+    value = "cloudwatch"
+  }
+  set {
+    name  = "grafana.additionalDataSources[0].access"
+    value = "proxy"
+  }
+  set {
+    name  = "grafana.additionalDataSources[0].isDefault"
+    value = "false"
+  }
+  set {
+    name  = "grafana.additionalDataSources[0].editable"
+    value = "true"
+  }
+  set {
+    name  = "grafana.additionalDataSources[0].jsonData.authType"
+    value = "default"
+  }
+  set {
+    name  = "grafana.additionalDataSources[0].jsonData.defaultRegion"
+    value = var.aws_region
+  }
+
   # ── 불필요한 컴포넌트 비활성화 ──────────────────────────────────────
   # AlertManager: Slack/Email 알림 발송 담당 — Pod 모니터링에 불필요
   set {
@@ -160,5 +271,50 @@ resource "helm_release" "kube_prometheus_stack" {
   depends_on = [
     module.eks,
     kubernetes_storage_class_v1.gp3,
+  ]
+}
+
+# ── Grafana Dashboard (CloudWatch Core) ───────────────────────────────
+# kube-prometheus-stack Grafana sidecar가 grafana_dashboard 라벨의 ConfigMap을 자동 로드
+resource "kubernetes_config_map_v1" "grafana_dashboard_cloudwatch_core" {
+  metadata {
+    name      = "grafana-dashboard-cloudwatch-core"
+    namespace = "default"
+    labels = {
+      grafana_dashboard = "1"
+    }
+    annotations = {
+      grafana_folder = "CloudWatch"
+    }
+  }
+
+  data = {
+    "cloudwatch-core-metrics.json" = file("${path.module}/../../dashboards/cloudwatch-core-metrics.json")
+  }
+
+  depends_on = [helm_release.kube_prometheus_stack]
+}
+
+# ── CloudWatch (AWS 관리형 리소스 모니터링) ───────────────────────────
+# K8s는 위 Prometheus/Grafana, AWS 리소스(RDS/Lambda/ALB/CloudFront)는 CloudWatch로 분리
+module "cloudwatch" {
+  source = "../../modules/cloudwatch"
+
+  project_name = var.project_name
+  environment  = var.environment
+
+  aws_region = var.aws_region
+
+  lambda_function_names = module.lambda.function_names
+  log_retention_days    = 30
+
+  enable_alarms = true
+  sns_topic_arn = module.sns.topic_arn
+
+  rds_instance_id = module.rds.instance_id
+  alb_arn_suffix  = module.alb.arn_suffix
+  cloudfront_distribution_ids = [
+    module.cloudfront.distribution_id,
+    module.cloudfront.frontend_distribution_id,
   ]
 }

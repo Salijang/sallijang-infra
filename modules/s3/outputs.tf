@@ -52,3 +52,13 @@ output "backup_bucket_arn" {
   description = "백업 버킷 ARN"
   value       = aws_s3_bucket.main["backup"].arn
 }
+
+output "lambda_bucket_name" {
+  description = "Lambda 코드 버킷 이름"
+  value       = aws_s3_bucket.main["lambda"].id
+}
+
+output "lambda_bucket_arn" {
+  description = "Lambda 코드 버킷 ARN"
+  value       = aws_s3_bucket.main["lambda"].arn
+}

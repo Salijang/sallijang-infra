@@ -6,6 +6,7 @@ locals {
     logs     = { name = "${local.name_prefix}-logs",     versioning = false }
     backup   = { name = "${local.name_prefix}-backup",   versioning = true }
     frontend = { name = "${local.name_prefix}-frontend", versioning = true }
+    lambda   = { name = "${local.name_prefix}-lambda",   versioning = false }
   }
 
   # logs 버킷만 제외 — CloudFront log-delivery-write ACL을 위해 block_public_acls=false 필요
@@ -80,6 +81,18 @@ resource "aws_s3_bucket_acl" "logs" {
   bucket     = aws_s3_bucket.main["logs"].id
   acl        = "log-delivery-write"
   depends_on = [aws_s3_bucket_ownership_controls.logs]
+}
+
+# ── CORS (images 버킷 — 브라우저 Presigned URL 직접 업로드) ───────────
+resource "aws_s3_bucket_cors_configuration" "images" {
+  bucket = aws_s3_bucket.main["images"].id
+
+  cors_rule {
+    allowed_headers = ["Content-Type"]
+    allowed_methods = ["PUT"]
+    allowed_origins = ["https://sallijang.shop", "https://app.sallijang.shop"]
+    max_age_seconds = 3000
+  }
 }
 
 # ── SSE-S3 암호화 ─────────────────────────────────────────────────────

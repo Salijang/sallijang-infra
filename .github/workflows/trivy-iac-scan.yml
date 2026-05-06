@@ -1,0 +1,32 @@
+name: Trivy IaC Security Scan
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trivy-iac:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Trivy IaC scan
+        uses: aquasecurity/trivy-action@v0.20.0
+        with:
+          scan-type: config
+          severity: HIGH,CRITICAL
+          exit-code: 1
+
+      - name: Send Slack alert on Trivy failure
+        if: failure()
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\":\"🚨 Trivy IaC Security Alert\nRepository: sallijang-infra\nHIGH/CRITICAL 인프라 보안 이슈 발견됨\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+          }" \
+          "$SLACK_WEBHOOK_URL"

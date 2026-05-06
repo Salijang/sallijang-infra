@@ -53,3 +53,23 @@ variable "db_username" {
   type        = string
   description = "RDS DB 사용자 이름 — rds-db:connect 리소스 ARN에 사용"
 }
+
+variable "stock_deduct_queue_arn" {
+  type        = string
+  description = "재고 차감 SQS 큐 ARN — Order(발행)/Product(소비)"
+}
+
+variable "stock_deduct_dlq_arn" {
+  type        = string
+  description = "재고 차감 DLQ ARN"
+}
+
+variable "stock_result_queue_arn" {
+  type        = string
+  description = "재고 차감 결과 SQS 큐 ARN — Product(발행)/Order(소비)"
+}
+
+variable "stock_result_dlq_arn" {
+  type        = string
+  description = "재고 차감 결과 DLQ ARN"
+}

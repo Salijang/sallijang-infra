@@ -35,9 +35,15 @@ variable "sns_topic_arn" {
 # 비어 있으면 Lambda 함수를 생성하지 않습니다.
 # CI/CD에서 코드를 S3에 업로드한 후 해당 버킷/키를 tfvars에 입력하세요.
 
+variable "deploy_lambda" {
+  type        = bool
+  description = "Lambda 함수 생성 여부. false면 Lambda 관련 리소스 미생성."
+  default     = false
+}
+
 variable "code_s3_bucket" {
   type        = string
-  description = "Lambda 코드가 담긴 S3 버킷 이름. 비우면 Lambda 미생성."
+  description = "Lambda 코드가 담긴 S3 버킷 이름."
   default     = ""
 }
 
@@ -78,7 +84,13 @@ variable "image_resize_handler" {
 
 variable "sns_notify_handler" {
   type    = string
-  default = "index.handler"
+  default = "handler.handler"
+}
+
+variable "sns_notify_runtime" {
+  type        = string
+  description = "SNS notify Lambda 런타임 (Python 코드)"
+  default     = "python3.11"
 }
 
 variable "sqs_dlq_arn" {

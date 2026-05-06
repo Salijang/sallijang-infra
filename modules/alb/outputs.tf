@@ -3,6 +3,16 @@ output "alb_arn" {
   value       = aws_lb.main.arn
 }
 
+output "arn_suffix" {
+  description = "ALB ARN suffix (예: app/pickup-dev-alb/abc123) — CloudWatch 알람 LoadBalancer dimension에 사용"
+  value       = aws_lb.main.arn_suffix
+}
+
+output "target_group_arn_suffix" {
+  description = "Target Group ARN suffix — CloudWatch 알람 TargetGroup dimension에 사용"
+  value       = aws_lb_target_group.main.arn_suffix
+}
+
 output "alb_dns_name" {
   description = "ALB DNS name"
   value       = aws_lb.main.dns_name

@@ -5,6 +5,8 @@ on:
     branches:
       - main
       - develop
+    paths-ignore:
+      - ".github/workflows/trivy-iac-scan.yml"
 
 jobs:
   sonar-security-alert:
@@ -66,4 +68,4 @@ jobs:
           --data "{
             \"text\":\"🚨 SonarQube Security Alert\nRepository: sallijang-infra\nOpen Security Issues: ${COUNT}건\nhttps://sonarcloud.io/project/overview?id=Salijang_sallijang-infra\"
           }" \
-          "$SLACK_WEBHOOK_URL"
+          "$SLACK_WEBHOOK_URL" //retestt

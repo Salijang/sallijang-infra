@@ -10,8 +10,8 @@ eks_subnet_cidrs      = ["10.1.3.0/24", "10.1.4.0/24"]
 realtime_subnet_cidrs = ["10.1.5.0/24", "10.1.6.0/24"]
 data_subnet_cidrs     = ["10.1.7.0/24", "10.1.8.0/24"]
 
-# EKS 1.29 / Amazon Linux 2 / ap-northeast-2
-# 업데이트: aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amazon-eks-node-1.29-v*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text
+# EKS 1.30 / Amazon Linux 2 / ap-northeast-2
+# 업데이트: aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amazon-eks-node-1.30-v*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text
 eks_node_ami_id = "ami-0cfd22eb40ec9c95a"
 
 # 팀 공인 IP — 변경 시 curl -s https://checkip.amazonaws.com 으로 재확인 후 업데이트

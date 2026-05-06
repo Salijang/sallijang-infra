@@ -65,7 +65,7 @@ variable "kubernetes_namespace" {
 
 variable "eks_node_ami_id" {
   type        = string
-  description = "EKS 최적화 AMI ID (Amazon Linux 2, ap-northeast-2). 조회: aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amazon-eks-node-1.29-v*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text"
+  description = "EKS 최적화 AMI ID (Amazon Linux 2, ap-northeast-2). 조회: aws ec2 describe-images --owners amazon --filters 'Name=name,Values=amazon-eks-node-1.30-v*' --query 'sort_by(Images,&CreationDate)[-1].ImageId' --output text"
 }
 
 variable "eks_public_access_cidrs" {
@@ -83,12 +83,6 @@ variable "grafana_admin_password" {
   type        = string
   description = "Grafana 관리자 비밀번호. terraform.tfvars에 직접 쓰거나 TF_VAR_grafana_admin_password 환경 변수로 주입."
   sensitive   = true
-}
-
-variable "lambda_code_s3_bucket" {
-  type        = string
-  description = "Lambda 코드가 담긴 S3 버킷. 비우면 Lambda 미생성."
-  default     = ""
 }
 
 variable "image_resize_code_s3_key" {
