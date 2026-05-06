@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+    paths:
+      - '**/*.tf'
+      - '.github/workflows/trivy-iac-scan.yml'
 
 jobs:
   trivy-iac:
