@@ -1,0 +1,27 @@
+# AWS-0053: ALB가 퍼블릭 서브넷에 위치 — 공개 서비스이므로 의도된 설계
+AVD-AWS-0053
+
+# AWS-0054: HTTP 리스너 — HTTPS 301 리다이렉트 전용으로 false positive
+AVD-AWS-0054
+
+# AWS-0011: CloudFront WAF 미적용 — 비용 및 복잡도 고려하여 의도적 미적용
+AVD-AWS-0011
+
+# AWS-0040: EKS public endpoint — kubectl 접근을 위해 의도적으로 허용
+AVD-AWS-0040
+
+# AWS-0039: EKS Secrets KMS 암호화 — AWS managed 보안 수준으로 충분
+AVD-AWS-0039
+
+# AWS-0104: SG egress 0.0.0.0/0 — Lambda/ALB 외부 API 호출을 위해 필요
+AVD-AWS-0104
+
+# AWS-0132: S3 CMK 암호화 미적용 — AWS managed AES-256(SSE-S3)으로 충분
+AVD-AWS-0132
+
+# AWS-0086, AWS-0091: CloudFront 로그 버킷 public ACL — log-delivery-write ACL 허용 필요
+AVD-AWS-0086
+AVD-AWS-0091
+
+# AWS-0136: SNS CMK 미사용 — AWS managed key(alias/aws/sns)로 충분, CMK는 비용 과다
+AVD-AWS-0136
