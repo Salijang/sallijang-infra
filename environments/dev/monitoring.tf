@@ -311,10 +311,15 @@ module "cloudwatch" {
   enable_alarms = true
   sns_topic_arn = module.sns.topic_arn
 
-  rds_instance_id = module.rds.instance_id
-  alb_arn_suffix  = module.alb.arn_suffix
+  rds_instance_id   = module.rds.instance_id
+  alb_arn_suffix    = module.alb.arn_suffix
+  create_alb_alarms = true
   cloudfront_distribution_ids = [
     module.cloudfront.distribution_id,
     module.cloudfront.frontend_distribution_id,
   ]
+  cloudfront_distribution_ids_by_name = {
+    images   = module.cloudfront.distribution_id
+    frontend = module.cloudfront.frontend_distribution_id
+  }
 }
