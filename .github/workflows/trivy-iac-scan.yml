@@ -28,8 +28,10 @@ jobs:
         env:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
+          ISSUE=$(grep -m 1 "HIGH:" trivy-results.txt)
+      
           curl -X POST -H 'Content-type: application/json' \
           --data "{
-            \"text\":\"🏗️ *Trivy IaC Security Alert*\n<@U0A53JU406S> <@U0A5JHMDY49>\nRepository: sallijang-*infra*\nHIGH/CRITICAL 인프라 보안 이슈 발견됨\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            \"text\":\"🏗️ *Trivy IaC Security Alert*\n<@황현민ID> <@송우민ID>\nRepository: sallijang-*infra*\n${ISSUE}\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
           }" \
           "$SLACK_WEBHOOK_URL"
