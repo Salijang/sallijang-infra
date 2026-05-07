@@ -1,0 +1,62 @@
+name: Trivy Image Security Scan
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'Dockerfile'
+      - '**/Dockerfile'
+      - '.github/workflows/trivy-image-scan.yml'
+
+jobs:
+  trivy-image:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: |
+          docker build -t sallijang-infra:latest .
+
+      - name: Run Trivy Image scan
+        id: trivy_scan
+        uses: aquasecurity/trivy-action@v0.20.0
+        continue-on-error: true
+        with:
+          image-ref: sallijang-infra:latest
+          format: table
+          output: trivy-image-results.txt
+          severity: HIGH,CRITICAL
+          exit-code: 1
+          trivyignores: .trivyignore
+
+      - name: Print Trivy result
+        if: always()
+        run: |
+          if [ -f trivy-image-results.txt ]; then
+            cat trivy-image-results.txt
+          else
+            echo "trivy-image-results.txt file was not created."
+          fi
+
+      - name: Send Slack alert on Trivy failure
+        if: steps.trivy_scan.outcome == 'failure'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+        run: |
+          ISSUE=$(grep -m 1 "HIGH" trivy-image-results.txt || grep -m 1 "CRITICAL" trivy-image-results.txt || echo "HIGH/CRITICAL 이미지 보안 이슈가 발견되었습니다.")
+
+          curl -X POST -H 'Content-type: application/json' \
+          --data "{
+            \"text\":\"🐳 *Trivy Image Security Alert*\n<@U0A53JU406S> <@U0A5JHMDY49>\nRepository: sallijang-*infra*\n${ISSUE}\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+          }" \
+          "$SLACK_WEBHOOK_URL"
+
+      - name: Fail pipeline if Trivy found issues
+        if: steps.trivy_scan.outcome == 'failure'
+        run: |
+          echo "Trivy found HIGH/CRITICAL image security issues. Failing pipeline."
+          exit 1
