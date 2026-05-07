@@ -1,0 +1,46 @@
+#!/bin/bash
+set -euxo pipefail
+
+dnf update -y
+dnf install -y git awscli dnf-plugins-core
+dnf install -y https://dl.k6.io/rpm/repo.rpm
+dnf install -y k6
+
+mkdir -p /opt/sallijang
+cd /opt/sallijang
+
+if [ ! -d k6_test/.git ]; then
+  git clone "${k6_repo_url}" k6_test
+fi
+
+cd /opt/sallijang/k6_test
+git fetch --all --prune
+git checkout "${checkout_ref}"
+git pull --ff-only || true
+
+cat >/opt/sallijang/run-k6.sh <<'SCRIPT'
+#!/bin/bash
+set -euo pipefail
+
+cd /opt/sallijang/k6_test
+
+RUN_ID="$${RUN_ID:-sallijang-$$(date +%Y%m%d-%H%M%S)}"
+RESULTS_DIR="$${RESULTS_DIR:-/opt/sallijang/results/$${RUN_ID}}"
+SCENARIO="$${SCENARIO:-tests/performance/k6/sallijang/smoke.js}"
+export K6_BASE_URL="$${K6_BASE_URL:-${k6_base_url}}"
+
+mkdir -p "$${RESULTS_DIR}"
+
+git pull --ff-only || true
+
+k6 run \
+  --tag "testid=$${RUN_ID}" \
+  --summary-export "$${RESULTS_DIR}/summary.json" \
+  "$${SCENARIO}" 2>&1 | tee "$${RESULTS_DIR}/run.log"
+
+if [ -n "${results_bucket}" ]; then
+  aws s3 cp "$${RESULTS_DIR}" "s3://${results_bucket}/${results_prefix}/$${RUN_ID}/" --recursive --region "${aws_region}"
+fi
+SCRIPT
+
+chmod +x /opt/sallijang/run-k6.sh

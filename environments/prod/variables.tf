@@ -95,3 +95,39 @@ variable "sns_notify_code_s3_key" {
   type    = string
   default = "lambda/sns-notify.zip"
 }
+
+variable "k6_runner_enabled" {
+  type        = bool
+  description = "k6 부하테스트용 EC2 runner 생성 여부."
+  default     = false
+}
+
+variable "k6_runner_instance_type" {
+  type        = string
+  description = "k6 runner EC2 instance type."
+  default     = "t3.medium"
+}
+
+variable "k6_runner_repo_url" {
+  type        = string
+  description = "k6 시나리오 레포 URL."
+  default     = "https://github.com/Salijang/k6_test.git"
+}
+
+variable "k6_runner_repo_ref" {
+  type        = string
+  description = "k6 runner가 checkout할 git ref."
+  default     = "main"
+}
+
+variable "k6_runner_base_url" {
+  type        = string
+  description = "k6 runner 기본 K6_BASE_URL."
+  default     = "https://api.sallijang.shop"
+}
+
+variable "k6_runner_results_prefix" {
+  type        = string
+  description = "k6 결과를 업로드할 S3 prefix."
+  default     = "k6-results/prod"
+}

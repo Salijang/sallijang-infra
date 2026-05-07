@@ -36,14 +36,34 @@ variable "code_s3_bucket" {
   description = "Lambda 코드 zip을 업로드할 S3 버킷 이름"
 }
 
+variable "deploy_lambda" {
+  type        = bool
+  description = "Lambda 함수 생성 여부. false면 Lambda 관련 리소스 미생성."
+  default     = false
+}
+
+variable "image_resize_code_s3_key" {
+  type        = string
+  description = "이미지 리사이징 Lambda 코드 S3 키"
+  default     = "lambda/image-resize.zip"
+}
+
+variable "sns_notify_code_s3_key" {
+  type        = string
+  description = "SNS 알림 Lambda 코드 S3 키"
+  default     = "lambda/sns-notify.zip"
+}
+
 variable "image_resize_source_dir" {
   type        = string
   description = "image-resize Lambda 소스 디렉터리 절대경로 (handler.js + package.json 위치)"
+  default     = ""
 }
 
 variable "sns_notify_source_dir" {
   type        = string
   description = "sns-notify Lambda 소스 디렉터리 절대경로 (handler.py 위치)"
+  default     = ""
 }
 
 variable "runtime" {
