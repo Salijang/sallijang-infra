@@ -196,7 +196,7 @@ module "cloudfront" {
   log_bucket_domain_name = module.s3.log_bucket_domain_name
 
   hosted_zone_id    = var.hosted_zone_id
-  domain_name       = var.domain_name
+  domain_name       = var.route53_zone_name
   route53_zone_name = var.route53_zone_name
 }
 

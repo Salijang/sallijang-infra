@@ -97,8 +97,32 @@ resource "aws_iam_role_policy" "github_actions" {
         Effect = "Allow"
         Action = ["s3:PutObject", "s3:GetObject"]
         Resource = [
-          "arn:aws:s3:::pickup-*-lambda-code/*"
+          "arn:aws:s3:::pickup-*-lambda/*"
         ]
+      },
+      {
+        # 프론트엔드 S3 버킷 동기화
+        Sid    = "FrontendS3Sync"
+        Effect = "Allow"
+        Action = ["s3:PutObject", "s3:GetObject", "s3:DeleteObject", "s3:ListBucket"]
+        Resource = [
+          "arn:aws:s3:::pickup-*-frontend",
+          "arn:aws:s3:::pickup-*-frontend/*"
+        ]
+      },
+      {
+        # CloudFront 캐시 무효화
+        Sid      = "CloudFrontInvalidation"
+        Effect   = "Allow"
+        Action   = ["cloudfront:CreateInvalidation"]
+        Resource = ["arn:aws:cloudfront::594486941613:distribution/*"]
+      },
+      {
+        # SSM에서 배포 설정값 읽기 (Distribution ID, 버킷명 등)
+        Sid      = "SSMReadDeployConfig"
+        Effect   = "Allow"
+        Action   = ["ssm:GetParameter"]
+        Resource = ["arn:aws:ssm:ap-northeast-2:594486941613:parameter/pickup/*"]
       },
       {
         # Terraform 원격 상태 버킷 ListBucket (terraform init 필수)
