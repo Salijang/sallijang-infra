@@ -51,7 +51,7 @@ jobs:
 
           curl -X POST -H 'Content-type: application/json' \
           --data "{
-            \"text\":\"🐳 *Trivy Image Security Alert*\n<@U0A53JU406S> <@U0A5JHMDY49>\nRepository: sallijang-*infra*\n${ISSUE}\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
+            \"text\":\"🛡️ *Trivy Image Security Alert*\n<@U0A53JU406S> <@U0A5JHMDY49>\nRepository: sallijang-*infra*\n${ISSUE}\n확인: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\"
           }" \
           "$SLACK_WEBHOOK_URL"
 
