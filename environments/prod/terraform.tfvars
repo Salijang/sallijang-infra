@@ -23,7 +23,7 @@ certificate_arn   = "arn:aws:acm:ap-northeast-2:594486941613:certificate/13988de
 node_port         = 30080
 route53_zone_name = "sallijang.shop"
 
-grafana_admin_password = "CHANGE_ME_BEFORE_APPLY"
+# grafana_admin_password = "admin"
 
 # Lambda 코드 S3 버킷 — 코드 업로드 후 설정
 # lambda_code_s3_bucket    = "pickup-prod-lambda-code"
