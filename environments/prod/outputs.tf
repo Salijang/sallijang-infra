@@ -64,3 +64,18 @@ output "lambda_sns_notify_arn" {
   description = "SNS 알림 Lambda ARN (Lambda 미배포 시 null)"
   value       = module.lambda.sns_notify_function_arn
 }
+
+output "k6_runner_instance_id" {
+  description = "k6 runner EC2 instance ID"
+  value       = module.k6_runner.instance_id
+}
+
+output "k6_runner_private_ip" {
+  description = "k6 runner private IP"
+  value       = module.k6_runner.private_ip
+}
+
+output "k6_runner_public_ip" {
+  description = "k6 runner public IP"
+  value       = module.k6_runner.public_ip
+}

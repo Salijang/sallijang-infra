@@ -27,3 +27,13 @@ route53_zone_name = "sallijang.shop"
 # lambda_code_s3_bucket    = "pickup-dev-lambda-code"
 # image_resize_code_s3_key = "lambda/image-resize.zip"
 # sns_notify_code_s3_key   = "lambda/sns-notify.zip"
+image_resize_code_s3_key = "lambda/image-resize.zip"
+sns_notify_code_s3_key   = "lambda/sns-notify.zip"
+
+# k6 load-test runner
+k6_runner_enabled        = true
+k6_runner_instance_type  = "t3.medium"
+k6_runner_repo_url       = "https://github.com/Salijang/k6_test.git"
+k6_runner_repo_ref       = "main"
+k6_runner_base_url       = "https://api.sallijang.shop"
+k6_runner_results_prefix = "k6-results/dev"

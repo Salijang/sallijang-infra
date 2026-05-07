@@ -30,3 +30,12 @@ grafana_admin_password = "CHANGE_ME_BEFORE_APPLY"
 # image_resize_code_s3_key = "lambda/image-resize.zip"
 # sns_notify_code_s3_key   = "lambda/sns-notify.zip"
 lambda_code_s3_bucket = ""
+
+# k6 load-test runner
+# prod 한계 테스트가 필요한 시점에만 true로 변경해서 apply한다.
+k6_runner_enabled        = false
+k6_runner_instance_type  = "t3.medium"
+k6_runner_repo_url       = "https://github.com/Salijang/k6_test.git"
+k6_runner_repo_ref       = "main"
+k6_runner_base_url       = "https://api.sallijang.shop"
+k6_runner_results_prefix = "k6-results/prod"

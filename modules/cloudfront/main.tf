@@ -18,7 +18,9 @@ resource "aws_wafv2_web_acl" "cloudfront" {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 1
 
-    override_action { none {} }
+    override_action {
+      none {}
+    }
 
     statement {
       managed_rule_group_statement {
@@ -38,7 +40,9 @@ resource "aws_wafv2_web_acl" "cloudfront" {
     name     = "AWSManagedRulesKnownBadInputsRuleSet"
     priority = 2
 
-    override_action { none {} }
+    override_action {
+      none {}
+    }
 
     statement {
       managed_rule_group_statement {
