@@ -278,8 +278,8 @@ resource "aws_launch_template" "node" {
 
   metadata_options {
     http_endpoint               = "enabled"
-    http_tokens                 = "required"  # IMDSv2 강제 (보안)
-    http_put_response_hop_limit = 2           # 컨테이너 내부에서 IMDS 접근 가능하도록 hop=2
+    http_tokens                 = "required" # IMDSv2 강제 (보안)
+    http_put_response_hop_limit = 2          # 컨테이너 내부에서 IMDS 접근 가능하도록 hop=2
   }
 
   user_data = base64encode(templatefile("${path.module}/templates/userdata.sh.tpl", {
@@ -344,9 +344,9 @@ resource "aws_autoscaling_group" "node" {
   ]
 }
 resource "aws_eks_access_entry" "yji_admin" {
-  cluster_name      = aws_eks_cluster.main.name
-  principal_arn     = "arn:aws:iam::594486941613:user/YJI"
-  type              = "STANDARD"
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = "arn:aws:iam::594486941613:user/YJI"
+  type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "yji_admin_policy" {
@@ -359,9 +359,9 @@ resource "aws_eks_access_policy_association" "yji_admin_policy" {
   }
 }
 resource "aws_eks_access_entry" "jyc_admin" {
-  cluster_name      = aws_eks_cluster.main.name
-  principal_arn     = "arn:aws:iam::594486941613:user/JYC"
-  type              = "STANDARD"
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = "arn:aws:iam::594486941613:user/JYC"
+  type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "jyc_admin_policy" {

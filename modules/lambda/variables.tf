@@ -36,14 +36,22 @@ variable "code_s3_bucket" {
   description = "Lambda 코드 zip을 업로드할 S3 버킷 이름"
 }
 
-variable "image_resize_source_dir" {
-  type        = string
-  description = "image-resize Lambda 소스 디렉터리 절대경로 (handler.js + package.json 위치)"
+variable "deploy_lambda" {
+  type        = bool
+  description = "Lambda 리소스 생성 여부"
+  default     = true
 }
 
-variable "sns_notify_source_dir" {
+variable "image_resize_code_s3_key" {
   type        = string
-  description = "sns-notify Lambda 소스 디렉터리 절대경로 (handler.py 위치)"
+  description = "image-resize Lambda zip S3 key"
+  default     = "lambda/image-resize.zip"
+}
+
+variable "sns_notify_code_s3_key" {
+  type        = string
+  description = "sns-notify Lambda zip S3 key"
+  default     = "lambda/sns-notify.zip"
 }
 
 variable "runtime" {

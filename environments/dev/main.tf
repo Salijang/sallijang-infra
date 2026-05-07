@@ -39,7 +39,7 @@ module "rds" {
   eks_sg_id       = module.vpc.eks_sg_id
 
   instance_class    = "db.t3.small"
-allocated_storage = 20
+  allocated_storage = 20
 
   db_name     = "pickupdb"
   db_username = "adminuser"
@@ -55,9 +55,9 @@ module "eks" {
   eks_subnet_ids = module.vpc.eks_subnet_ids
   eks_sg_id      = module.vpc.eks_sg_id
 
-  node_ami_id          = var.eks_node_ami_id
-  public_access_cidrs  = var.eks_public_access_cidrs
-  target_group_arns    = [module.alb.target_group_arn]
+  node_ami_id         = var.eks_node_ami_id
+  public_access_cidrs = var.eks_public_access_cidrs
+  target_group_arns   = [module.alb.target_group_arn]
 }
 
 module "s3" {
@@ -80,7 +80,7 @@ resource "aws_sqs_queue" "stock_deduct_dlq" {
   name                      = "${var.project_name}-${var.environment}-stock-deduct-dlq"
   message_retention_seconds = 1209600
   sqs_managed_sse_enabled   = true
-  tags = { Name = "${var.project_name}-${var.environment}-stock-deduct-dlq" }
+  tags                      = { Name = "${var.project_name}-${var.environment}-stock-deduct-dlq" }
 }
 
 resource "aws_sqs_queue" "stock_deduct" {
@@ -108,7 +108,7 @@ resource "aws_sqs_queue" "stock_result_dlq" {
   name                      = "${var.project_name}-${var.environment}-stock-result-dlq"
   message_retention_seconds = 1209600
   sqs_managed_sse_enabled   = true
-  tags = { Name = "${var.project_name}-${var.environment}-stock-result-dlq" }
+  tags                      = { Name = "${var.project_name}-${var.environment}-stock-result-dlq" }
 }
 
 resource "aws_sqs_queue" "stock_result" {
@@ -227,9 +227,9 @@ module "lambda" {
   image_bucket_arn  = module.s3.image_bucket_arn
   sns_topic_arn     = module.sns.topic_arn
 
-  deploy_lambda   = false
-  sqs_dlq_arn     = ""
-  code_s3_bucket  = module.s3.lambda_bucket_name
+  deploy_lambda  = false
+  sqs_dlq_arn    = ""
+  code_s3_bucket = module.s3.lambda_bucket_name
 
   image_resize_code_s3_key = var.image_resize_code_s3_key
   sns_notify_code_s3_key   = var.sns_notify_code_s3_key

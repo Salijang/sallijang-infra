@@ -51,6 +51,17 @@ variable "max_allocated_storage" {
   default     = 0
 }
 
+variable "backup_retention_period" {
+  type        = number
+  description = "자동 백업 보존 기간(일). Read Replica를 생성하려면 1 이상이어야 함."
+  default     = 0
+
+  validation {
+    condition     = var.backup_retention_period >= 0 && var.backup_retention_period <= 35
+    error_message = "backup_retention_period는 0에서 35 사이여야 합니다."
+  }
+}
+
 variable "db_name" {
   type        = string
   description = "Database name"
@@ -84,4 +95,3 @@ variable "enable_read_replica" {
   description = "Read Replica 생성 여부 (prod: true)"
   default     = false
 }
-
