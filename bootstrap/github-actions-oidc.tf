@@ -82,7 +82,10 @@ resource "aws_iam_role_policy" "github_actions" {
           "ecr:BatchGetImage",
           "ecr:GetDownloadUrlForLayer"
         ]
-        Resource = ["arn:aws:ecr:ap-northeast-2:594486941613:repository/pickup-*"]
+        Resource = [
+          "arn:aws:ecr:ap-northeast-2:594486941613:repository/pickup-*",
+          "arn:aws:ecr:ap-northeast-2:594486941613:repository/sallijang-*"
+        ]
       },
       {
         # EKS kubeconfig 업데이트 (kubectl/helm 배포용)

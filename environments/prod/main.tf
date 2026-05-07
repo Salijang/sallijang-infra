@@ -260,8 +260,8 @@ module "lambda" {
 
   sqs_dlq_arn = module.sqs.dlq_arn
 
-  deploy_lambda            = var.lambda_code_s3_bucket != ""
-  code_s3_bucket           = var.lambda_code_s3_bucket
+  deploy_lambda            = true
+  code_s3_bucket           = module.s3.lambda_bucket_name
   image_resize_code_s3_key = var.image_resize_code_s3_key
   sns_notify_code_s3_key   = var.sns_notify_code_s3_key
 }

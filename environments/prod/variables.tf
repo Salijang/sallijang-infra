@@ -80,12 +80,6 @@ variable "grafana_admin_password" {
 }
 
 # ── Lambda 코드 위치 ──────────────────────────────────────────────────
-variable "lambda_code_s3_bucket" {
-  type        = string
-  description = "Lambda 코드가 담긴 S3 버킷. 비우면 Lambda 미생성."
-  default     = ""
-}
-
 variable "image_resize_code_s3_key" {
   type    = string
   default = "lambda/image-resize.zip"
