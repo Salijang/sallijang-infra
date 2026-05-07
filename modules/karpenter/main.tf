@@ -95,7 +95,7 @@ resource "aws_iam_policy" "controller" {
         Condition = {
           StringEquals = {
             "aws:RequestTag/kubernetes.io/cluster/${var.cluster_name}" = "owned"
-            "ec2:CreateAction" = ["RunInstances", "CreateFleet", "CreateLaunchTemplate"]
+            "ec2:CreateAction"                                         = ["RunInstances", "CreateFleet", "CreateLaunchTemplate"]
           }
           StringLike = {
             "aws:RequestTag/karpenter.sh/nodepool" = "*"

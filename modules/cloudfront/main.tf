@@ -6,9 +6,9 @@ locals {
 
 # ── WAF Web ACL (CloudFront용 — us-east-1 필수) ───────────────────────
 resource "aws_wafv2_web_acl" "cloudfront" {
-  provider    = aws.us_east_1
-  name        = "${local.name_prefix}-cloudfront-waf"
-  scope       = "CLOUDFRONT"
+  provider = aws.us_east_1
+  name     = "${local.name_prefix}-cloudfront-waf"
+  scope    = "CLOUDFRONT"
 
   default_action {
     allow {}
@@ -18,8 +18,8 @@ resource "aws_wafv2_web_acl" "cloudfront" {
     name     = "AWSManagedRulesCommonRuleSet"
     priority = 1
 
-    override_action { 
-      none {} 
+    override_action {
+      none {}
     }
 
     statement {
@@ -40,8 +40,8 @@ resource "aws_wafv2_web_acl" "cloudfront" {
     name     = "AWSManagedRulesKnownBadInputsRuleSet"
     priority = 2
 
-    override_action { 
-      none {} 
+    override_action {
+      none {}
     }
 
     statement {

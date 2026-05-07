@@ -21,21 +21,21 @@ locals {
       "sallijang-notify-sa", # [추가] notify 서비스 IRSA 역할 신설에 따라 Trust Policy 대상에 포함
       "sallijang-user-sa",
       "sallijang-frontend-sa",
-    ] : sa_name => jsonencode({
-      Version = "2012-10-17"
-      Statement = [{
-        Effect = "Allow"
-        Principal = {
-          Federated = var.oidc_provider_arn
-        }
-        Action = "sts:AssumeRoleWithWebIdentity"
-        Condition = {
-          StringEquals = {
-            "${local.oidc_host}:sub" = "system:serviceaccount:${var.kubernetes_namespace}:${sa_name}"
-            "${local.oidc_host}:aud" = "sts.amazonaws.com"
+      ] : sa_name => jsonencode({
+        Version = "2012-10-17"
+        Statement = [{
+          Effect = "Allow"
+          Principal = {
+            Federated = var.oidc_provider_arn
           }
-        }
-      }]
+          Action = "sts:AssumeRoleWithWebIdentity"
+          Condition = {
+            StringEquals = {
+              "${local.oidc_host}:sub" = "system:serviceaccount:${var.kubernetes_namespace}:${sa_name}"
+              "${local.oidc_host}:aud" = "sts.amazonaws.com"
+            }
+          }
+        }]
     })
   }
 }
@@ -80,9 +80,9 @@ resource "aws_iam_policy" "order" {
         ]
       },
       {
-        Sid    = "SQSStockDeductPublish"
-        Effect = "Allow"
-        Action = ["sqs:SendMessage"]
+        Sid      = "SQSStockDeductPublish"
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
         Resource = [var.stock_deduct_queue_arn]
       },
       {
@@ -169,9 +169,9 @@ resource "aws_iam_policy" "product" {
         ]
       },
       {
-        Sid    = "SQSStockResultPublish"
-        Effect = "Allow"
-        Action = ["sqs:SendMessage"]
+        Sid      = "SQSStockResultPublish"
+        Effect   = "Allow"
+        Action   = ["sqs:SendMessage"]
         Resource = [var.stock_result_queue_arn]
       },
       {

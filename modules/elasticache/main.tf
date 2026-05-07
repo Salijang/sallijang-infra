@@ -21,11 +21,11 @@ resource "aws_elasticache_replication_group" "main" {
   replication_group_id = "${local.name_prefix}-redis"
   description          = "Redis replication group for ${local.name_prefix}"
 
-  engine               = "redis"
-  engine_version       = var.redis_version
-  node_type            = var.node_type
-  num_cache_clusters   = var.num_cache_clusters
-  port                 = 6379
+  engine             = "redis"
+  engine_version     = var.redis_version
+  node_type          = var.node_type
+  num_cache_clusters = var.num_cache_clusters
+  port               = 6379
 
   subnet_group_name  = aws_elasticache_subnet_group.main.name
   security_group_ids = [var.redis_sg_id]

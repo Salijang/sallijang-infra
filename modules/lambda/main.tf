@@ -54,9 +54,9 @@ resource "aws_iam_role_policy" "lambda" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "S3ImageAccess"
-        Effect = "Allow"
-        Action = ["s3:GetObject", "s3:PutObject"]
+        Sid      = "S3ImageAccess"
+        Effect   = "Allow"
+        Action   = ["s3:GetObject", "s3:PutObject"]
         Resource = ["${var.image_bucket_arn}/*"]
       },
       {

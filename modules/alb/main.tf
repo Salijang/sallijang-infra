@@ -123,8 +123,8 @@ resource "aws_lb" "main" {
   security_groups    = [var.alb_sg_id]
   subnets            = var.public_subnet_ids
 
-  enable_deletion_protection   = false
-  drop_invalid_header_fields   = true
+  enable_deletion_protection = false
+  drop_invalid_header_fields = true
 
   dynamic "access_logs" {
     for_each = var.log_bucket_name != "" ? [1] : []
