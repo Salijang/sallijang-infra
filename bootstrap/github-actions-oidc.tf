@@ -125,6 +125,22 @@ resource "aws_iam_role_policy" "github_actions" {
         Resource = ["arn:aws:ssm:ap-northeast-2:594486941613:parameter/pickup/*"]
       },
       {
+        # bootstrap terraform 자동화: 이 Role의 정책을 CI가 직접 업데이트할 수 있도록 허용
+        Sid    = "IAMSelfManage"
+        Effect = "Allow"
+        Action = [
+          "iam:GetRole",
+          "iam:GetRolePolicy",
+          "iam:PutRolePolicy",
+          "iam:GetOpenIDConnectProvider",
+          "iam:TagOpenIDConnectProvider"
+        ]
+        Resource = [
+          "arn:aws:iam::594486941613:role/pickup-github-actions-role",
+          "arn:aws:iam::594486941613:oidc-provider/token.actions.githubusercontent.com"
+        ]
+      },
+      {
         # Terraform 원격 상태 버킷 ListBucket (terraform init 필수)
         Sid    = "TerraformStateList"
         Effect = "Allow"

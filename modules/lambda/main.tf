@@ -79,6 +79,33 @@ resource "aws_iam_role_policy" "lambda" {
   })
 }
 
+# ── Lambda 코드 초기 업로드 (bootstrap) ──────────────────────────────
+# CI/CD 이전에 terraform apply 시 zip이 S3에 없으면 Lambda 생성 실패하므로
+# 최초 1회 로컬 zip을 S3에 올린다. 이후 CI/CD가 덮어쓰므로 ignore_changes.
+resource "aws_s3_object" "image_resize_zip" {
+  count  = var.deploy_lambda ? 1 : 0
+  bucket = var.code_s3_bucket
+  key    = var.image_resize_code_s3_key
+  source = "${path.module}/image-resize.zip"
+  etag   = filemd5("${path.module}/image-resize.zip")
+
+  lifecycle {
+    ignore_changes = [etag, source, source_hash]
+  }
+}
+
+resource "aws_s3_object" "sns_notify_zip" {
+  count  = var.deploy_lambda ? 1 : 0
+  bucket = var.code_s3_bucket
+  key    = var.sns_notify_code_s3_key
+  source = "${path.module}/sns-notify.zip"
+  etag   = filemd5("${path.module}/sns-notify.zip")
+
+  lifecycle {
+    ignore_changes = [etag, source, source_hash]
+  }
+}
+
 # ── Lambda 1: 이미지 리사이징 ─────────────────────────────────────────
 # S3 products/ 경로에 .jpg 업로드 시 자동 트리거 → 썸네일 생성
 resource "aws_lambda_function" "image_resize" {
@@ -107,6 +134,8 @@ resource "aws_lambda_function" "image_resize" {
       BUCKET_NAME = var.image_bucket_name
     }
   }
+
+  depends_on = [aws_s3_object.image_resize_zip]
 
   tags = { Name = "${local.name_prefix}-image-resize" }
 }
@@ -163,6 +192,8 @@ resource "aws_lambda_function" "sns_notify" {
       SNS_TOPIC_ARN = var.sns_topic_arn
     }
   }
+
+  depends_on = [aws_s3_object.sns_notify_zip]
 
   tags = { Name = "${local.name_prefix}-sns-notify" }
 }
