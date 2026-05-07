@@ -39,17 +39,18 @@ module "rds" {
   rds_sg_id       = module.vpc.rds_sg_id
   eks_sg_id       = module.vpc.eks_sg_id
 
-  instance_class        = "db.t3.medium"
-  allocated_storage     = 100
-  max_allocated_storage = 500
+  instance_class          = "db.t3.medium"
+  allocated_storage       = 100
+  max_allocated_storage   = 500
+  backup_retention_period = 7
 
   db_name     = "pickupdb"
   db_username = "adminuser"
 
-  multi_az             = true
-  skip_final_snapshot  = false
-  deletion_protection  = true
-  enable_read_replica  = true
+  multi_az            = true
+  skip_final_snapshot = false
+  deletion_protection = true
+  enable_read_replica = false
 }
 
 module "eks" {
@@ -62,10 +63,10 @@ module "eks" {
   eks_subnet_ids = module.vpc.eks_subnet_ids
   eks_sg_id      = module.vpc.eks_sg_id
 
-  instance_type     = "t3.large"
-  node_min_size     = 2
-  node_desired_size = 2
-  node_max_size     = 4
+  instance_type       = "t3.large"
+  node_min_size       = 2
+  node_desired_size   = 2
+  node_max_size       = 4
   node_ami_id         = var.eks_node_ami_id
   public_access_cidrs = var.eks_public_access_cidrs
   target_group_arns   = [module.alb.target_group_arn]
@@ -84,6 +85,62 @@ module "sqs" {
 
   project_name = var.project_name
   environment  = var.environment
+}
+
+# ── Saga 패턴용 재고 차감 큐 ─────────────────────────────────────────
+resource "aws_sqs_queue" "stock_deduct_dlq" {
+  name                      = "${var.project_name}-${var.environment}-stock-deduct-dlq"
+  message_retention_seconds = 1209600
+  sqs_managed_sse_enabled   = true
+  tags                      = { Name = "${var.project_name}-${var.environment}-stock-deduct-dlq" }
+}
+
+resource "aws_sqs_queue" "stock_deduct" {
+  name                       = "${var.project_name}-${var.environment}-stock-deduct"
+  visibility_timeout_seconds = 30
+  message_retention_seconds  = 86400
+  sqs_managed_sse_enabled    = true
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.stock_deduct_dlq.arn
+    maxReceiveCount     = 3
+  })
+  tags = { Name = "${var.project_name}-${var.environment}-stock-deduct" }
+}
+
+resource "aws_sqs_queue_redrive_allow_policy" "stock_deduct_dlq" {
+  queue_url = aws_sqs_queue.stock_deduct_dlq.id
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "byQueue"
+    sourceQueueArns   = [aws_sqs_queue.stock_deduct.arn]
+  })
+}
+
+# ── Saga 패턴용 재고 차감 결과 큐 ────────────────────────────────────
+resource "aws_sqs_queue" "stock_result_dlq" {
+  name                      = "${var.project_name}-${var.environment}-stock-result-dlq"
+  message_retention_seconds = 1209600
+  sqs_managed_sse_enabled   = true
+  tags                      = { Name = "${var.project_name}-${var.environment}-stock-result-dlq" }
+}
+
+resource "aws_sqs_queue" "stock_result" {
+  name                       = "${var.project_name}-${var.environment}-stock-result"
+  visibility_timeout_seconds = 30
+  message_retention_seconds  = 86400
+  sqs_managed_sse_enabled    = true
+  redrive_policy = jsonencode({
+    deadLetterTargetArn = aws_sqs_queue.stock_result_dlq.arn
+    maxReceiveCount     = 3
+  })
+  tags = { Name = "${var.project_name}-${var.environment}-stock-result" }
+}
+
+resource "aws_sqs_queue_redrive_allow_policy" "stock_result_dlq" {
+  queue_url = aws_sqs_queue.stock_result_dlq.id
+  redrive_allow_policy = jsonencode({
+    redrivePermission = "byQueue"
+    sourceQueueArns   = [aws_sqs_queue.stock_result.arn]
+  })
 }
 
 module "sns" {
@@ -107,6 +164,11 @@ module "iam" {
   sqs_dlq_arn      = module.sqs.dlq_arn
   sns_topic_arn    = module.sns.topic_arn
   image_bucket_arn = module.s3.image_bucket_arn
+
+  stock_deduct_queue_arn = aws_sqs_queue.stock_deduct.arn
+  stock_deduct_dlq_arn   = aws_sqs_queue.stock_deduct_dlq.arn
+  stock_result_queue_arn = aws_sqs_queue.stock_result.arn
+  stock_result_dlq_arn   = aws_sqs_queue.stock_result_dlq.arn
 
   kubernetes_namespace = var.kubernetes_namespace
   db_username          = "adminuser"
@@ -198,6 +260,7 @@ module "lambda" {
 
   sqs_dlq_arn = module.sqs.dlq_arn
 
+  deploy_lambda            = var.lambda_code_s3_bucket != ""
   code_s3_bucket           = var.lambda_code_s3_bucket
   image_resize_code_s3_key = var.image_resize_code_s3_key
   sns_notify_code_s3_key   = var.sns_notify_code_s3_key

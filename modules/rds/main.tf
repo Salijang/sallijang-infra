@@ -16,8 +16,8 @@ resource "aws_iam_role" "rds_proxy" {
   })
 
   tags = {
-    Name        = "${local.name_prefix}-rds-proxy-role"
-    ManagedBy   = "terraform"
+    Name      = "${local.name_prefix}-rds-proxy-role"
+    ManagedBy = "terraform"
   }
 }
 
@@ -92,8 +92,8 @@ resource "aws_db_proxy" "main" {
   }
 
   tags = {
-    Name        = "${local.name_prefix}-rds-proxy"
-    ManagedBy   = "terraform"
+    Name      = "${local.name_prefix}-rds-proxy"
+    ManagedBy = "terraform"
   }
 
   depends_on = [aws_iam_role_policy.rds_proxy_secrets]
@@ -132,10 +132,11 @@ resource "aws_db_instance" "main" {
   engine_version = "16"
   instance_class = var.instance_class
 
-  allocated_storage     = var.allocated_storage
-  max_allocated_storage = var.max_allocated_storage > 0 ? var.max_allocated_storage : null
-  storage_type          = "gp3"
-  storage_encrypted     = true
+  allocated_storage       = var.allocated_storage
+  max_allocated_storage   = var.max_allocated_storage > 0 ? var.max_allocated_storage : null
+  backup_retention_period = var.backup_retention_period
+  storage_type            = "gp3"
+  storage_encrypted       = true
 
   db_name  = var.db_name
   username = var.db_username
@@ -175,6 +176,16 @@ resource "aws_db_instance" "read_replica" {
   vpc_security_group_ids = [var.rds_sg_id]
 
   lifecycle {
+    precondition {
+      condition     = var.backup_retention_period > 0
+      error_message = "enable_read_replica가 true이면 backup_retention_period를 1 이상으로 설정해야 합니다."
+    }
+
+    precondition {
+      condition     = !var.enable_read_replica
+      error_message = "현재 RDS 모듈은 manage_master_user_password = true로 고정되어 있어 PostgreSQL Read Replica를 지원하지 않습니다."
+    }
+
     ignore_changes = [engine_version]
   }
 
