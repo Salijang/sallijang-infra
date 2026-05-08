@@ -1,5 +1,140 @@
 locals {
   oidc_issuer_host = replace(module.eks.oidc_issuer_url, "https://", "")
+
+  alertmanager_slack_enabled = var.alertmanager_slack_webhook_url != ""
+  aws_chatbot_slack_enabled  = var.slack_workspace_id != "" && var.slack_channel_id != ""
+
+  kube_prometheus_stack_values = local.alertmanager_slack_enabled ? [
+    yamlencode({
+      alertmanager = {
+        config = {
+          global = {
+            resolve_timeout = "5m"
+            slack_api_url   = var.alertmanager_slack_webhook_url
+          }
+          route = {
+            receiver        = "null"
+            group_by        = ["namespace", "alertname"]
+            group_wait      = "30s"
+            group_interval  = "5m"
+            repeat_interval = "4h"
+            routes = [
+              {
+                receiver = "slack-notifications"
+                matchers = [
+                  "slack_alert=\"true\"",
+                  "severity=~\"info|warning|critical\"",
+                ]
+              }
+            ]
+          }
+          receivers = [
+            {
+              name = "null"
+            },
+            {
+              name = "slack-notifications"
+              slack_configs = [
+                {
+                  channel       = var.alertmanager_slack_channel
+                  send_resolved = true
+                  title         = "[{{ .Status | toUpper }}] {{ .CommonLabels.severity }} {{ .CommonLabels.alertname }}"
+                  text          = "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ .Annotations.description }}\n{{ end }}"
+                  color         = "{{ if eq .Status \"firing\" }}danger{{ else }}good{{ end }}"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    })
+  ] : []
+}
+
+data "aws_caller_identity" "current" {}
+
+resource "aws_kms_key" "monitoring_alerts" {
+  description             = "${var.project_name}-${var.environment} monitoring alerts SNS key"
+  deletion_window_in_days = 7
+  enable_key_rotation     = true
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "EnableRootAccountAdministration"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:root"
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowCloudWatchAlarmsToPublishEncryptedNotifications"
+        Effect = "Allow"
+        Principal = {
+          Service = "cloudwatch.amazonaws.com"
+        }
+        Action = [
+          "kms:Decrypt",
+          "kms:GenerateDataKey*",
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+
+  tags = { Name = "${var.project_name}-${var.environment}-monitoring-alerts" }
+}
+
+resource "aws_kms_alias" "monitoring_alerts" {
+  name          = "alias/${var.project_name}-${var.environment}-monitoring-alerts"
+  target_key_id = aws_kms_key.monitoring_alerts.key_id
+}
+
+resource "aws_sns_topic" "monitoring_alerts" {
+  name              = "${var.project_name}-${var.environment}-monitoring-alerts"
+  kms_master_key_id = aws_kms_key.monitoring_alerts.arn
+
+  tags = { Name = "${var.project_name}-${var.environment}-monitoring-alerts" }
+}
+
+resource "aws_iam_role" "chatbot_slack" {
+  count = local.aws_chatbot_slack_enabled ? 1 : 0
+
+  name = "${var.project_name}-${var.environment}-chatbot-slack-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "chatbot.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = { Name = "${var.project_name}-${var.environment}-chatbot-slack-role" }
+}
+
+resource "aws_iam_role_policy_attachment" "chatbot_cloudwatch_readonly" {
+  count = local.aws_chatbot_slack_enabled ? 1 : 0
+
+  role       = aws_iam_role.chatbot_slack[0].name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchReadOnlyAccess"
+}
+
+resource "aws_chatbot_slack_channel_configuration" "monitoring_alerts" {
+  count = local.aws_chatbot_slack_enabled ? 1 : 0
+
+  configuration_name = "${var.project_name}-${var.environment}-monitoring-alerts"
+  iam_role_arn       = aws_iam_role.chatbot_slack[0].arn
+  slack_channel_id   = var.slack_channel_id
+  slack_team_id      = var.slack_workspace_id
+  sns_topic_arns     = [aws_sns_topic.monitoring_alerts.arn]
+  logging_level      = "ERROR"
+
+  depends_on = [aws_iam_role_policy_attachment.chatbot_cloudwatch_readonly]
 }
 
 resource "aws_iam_role" "ebs_csi_driver" {
@@ -192,6 +327,7 @@ resource "helm_release" "kube_prometheus_stack" {
   namespace        = "default"
   create_namespace = false
   timeout          = 600
+  values           = local.kube_prometheus_stack_values
 
   set {
     name  = "prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.storageClassName"
@@ -673,9 +809,24 @@ resource "kubectl_manifest" "autoscaling_alerts" {
               labels:
                 environment: prod
                 severity: warning
+                slack_alert: "true"
               annotations:
                 summary: "HPA wants more replicas than currently available"
                 description: "HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} desired replicas has been above current replicas for more than 3 minutes."
+
+            - alert: HPAScaleOutActive
+              expr: |
+                kube_horizontalpodautoscaler_status_desired_replicas{namespace="default"}
+                >
+                kube_horizontalpodautoscaler_spec_min_replicas{namespace="default"}
+              for: 1m
+              labels:
+                environment: prod
+                severity: info
+                slack_alert: "true"
+              annotations:
+                summary: "HPA scale-out is active"
+                description: "HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} desired replicas is above min replicas. A resolved notification means the scale-out ended."
 
             - alert: HPAScalingLimited
               expr: kube_horizontalpodautoscaler_status_condition{namespace="default",condition="ScalingLimited",status="true"} == 1
@@ -683,9 +834,24 @@ resource "kubectl_manifest" "autoscaling_alerts" {
               labels:
                 environment: prod
                 severity: warning
+                slack_alert: "true"
               annotations:
                 summary: "HPA scaling is limited"
                 description: "HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} is capped by min or max replicas."
+
+            - alert: HPAAtMaxReplicas
+              expr: |
+                kube_horizontalpodautoscaler_status_desired_replicas{namespace="default"}
+                >=
+                kube_horizontalpodautoscaler_spec_max_replicas{namespace="default"}
+              for: 5m
+              labels:
+                environment: prod
+                severity: critical
+                slack_alert: "true"
+              annotations:
+                summary: "HPA is at max replicas"
+                description: "HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} has been at max replicas for more than 5 minutes."
 
             - alert: PodsPendingOrUnschedulable
               expr: |
@@ -696,10 +862,22 @@ resource "kubectl_manifest" "autoscaling_alerts" {
               for: 3m
               labels:
                 environment: prod
-                severity: warning
+                severity: critical
+                slack_alert: "true"
               annotations:
                 summary: "Pods are pending or unschedulable"
                 description: "Namespace {{ $labels.namespace }} has pending or unschedulable pods for more than 3 minutes."
+
+            - alert: KarpenterNodeClaimsCreated
+              expr: sum by (nodepool) (increase(karpenter_nodeclaims_created_total[5m])) > 0
+              for: 0m
+              labels:
+                environment: prod
+                severity: info
+                slack_alert: "true"
+              annotations:
+                summary: "Karpenter created node claims"
+                description: "Karpenter created NodeClaims for nodepool {{ $labels.nodepool }} in the last 5 minutes."
 
             - alert: KarpenterSchedulerQueueBacklog
               expr: karpenter_scheduler_queue_depth > 0
@@ -707,6 +885,7 @@ resource "kubectl_manifest" "autoscaling_alerts" {
               labels:
                 environment: prod
                 severity: warning
+                slack_alert: "true"
               annotations:
                 summary: "Karpenter scheduler queue has backlog"
                 description: "Karpenter has pods waiting in its scheduling queue for more than 3 minutes."
@@ -717,22 +896,46 @@ resource "kubectl_manifest" "autoscaling_alerts" {
               labels:
                 environment: prod
                 severity: warning
+                slack_alert: "true"
               annotations:
                 summary: "Karpenter cloud provider errors detected"
                 description: "Karpenter cloud provider calls are returning errors."
 
             - alert: KarpenterNodePoolLimitHigh
               expr: |
-                max by (nodepool, resource_type, resource) (
-                  100 * karpenter_nodepools_usage / karpenter_nodepools_limit
-                ) > 80
+                (
+                  max by (nodepool, resource_type, resource) (
+                    100 * karpenter_nodepools_usage / karpenter_nodepools_limit
+                  ) > 80
+                )
+                and
+                (
+                  max by (nodepool, resource_type, resource) (
+                    100 * karpenter_nodepools_usage / karpenter_nodepools_limit
+                  ) <= 90
+                )
               for: 5m
               labels:
                 environment: prod
                 severity: warning
+                slack_alert: "true"
               annotations:
                 summary: "Karpenter NodePool usage is near its limit"
                 description: "NodePool {{ $labels.nodepool }} resource usage is over 80% of its configured limit."
+
+            - alert: KarpenterNodePoolLimitCritical
+              expr: |
+                max by (nodepool, resource_type, resource) (
+                  100 * karpenter_nodepools_usage / karpenter_nodepools_limit
+                ) > 90
+              for: 5m
+              labels:
+                environment: prod
+                severity: critical
+                slack_alert: "true"
+              annotations:
+                summary: "Karpenter NodePool usage is critically near its limit"
+                description: "NodePool {{ $labels.nodepool }} resource usage is over 90% of its configured limit."
   YAML
 
   depends_on = [
@@ -755,7 +958,7 @@ module "cloudwatch" {
   log_retention_days    = 30
 
   enable_alarms = true
-  sns_topic_arn = module.sns.topic_arn
+  sns_topic_arn = aws_sns_topic.monitoring_alerts.arn
 
   enable_extended_metrics = true
 
