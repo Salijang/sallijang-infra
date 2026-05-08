@@ -92,6 +92,64 @@ resource "aws_iam_role_policy_attachment" "grafana_cloudwatch" {
   policy_arn = aws_iam_policy.grafana_cloudwatch.arn
 }
 
+resource "aws_iam_role" "loki_s3" {
+  name = "${var.project_name}-${var.environment}-loki-s3-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Federated = module.eks.oidc_provider_arn }
+      Action    = "sts:AssumeRoleWithWebIdentity"
+      Condition = {
+        StringEquals = {
+          "${local.oidc_issuer_host}:sub" = "system:serviceaccount:default:loki"
+          "${local.oidc_issuer_host}:aud" = "sts.amazonaws.com"
+        }
+      }
+    }]
+  })
+
+  tags = { Name = "${var.project_name}-${var.environment}-loki-s3-role" }
+}
+
+resource "aws_iam_policy" "loki_s3" {
+  name = "${var.project_name}-${var.environment}-loki-s3-policy"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid      = "LokiS3ListBucket"
+        Effect   = "Allow"
+        Action   = ["s3:ListBucket"]
+        Resource = module.s3.log_bucket_arn
+      },
+      {
+        Sid    = "LokiS3Objects"
+        Effect = "Allow"
+        Action = [
+          "s3:PutObject",
+          "s3:GetObject",
+          "s3:DeleteObject",
+        ]
+        Resource = "${module.s3.log_bucket_arn}/*"
+      }
+    ]
+  })
+
+  tags = {
+    Project     = var.project_name
+    Environment = var.environment
+    ManagedBy   = "terraform"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "loki_s3" {
+  role       = aws_iam_role.loki_s3.name
+  policy_arn = aws_iam_policy.loki_s3.arn
+}
+
 resource "aws_eks_addon" "ebs_csi_driver" {
   cluster_name             = module.eks.cluster_name
   addon_name               = "aws-ebs-csi-driver"
@@ -202,6 +260,16 @@ resource "helm_release" "kube_prometheus_stack" {
   }
 
   set {
+    name  = "grafana.sidecar.datasources.initDatasources"
+    value = "true"
+  }
+
+  set {
+    name  = "grafana.sidecar.datasources.skipReload"
+    value = "false"
+  }
+
+  set {
     name  = "grafana.additionalDataSources[0].name"
     value = "CloudWatch"
   }
@@ -241,6 +309,41 @@ resource "helm_release" "kube_prometheus_stack" {
     value = var.aws_region
   }
 
+  set {
+    name  = "grafana.additionalDataSources[1].name"
+    value = "Loki"
+  }
+
+  set {
+    name  = "grafana.additionalDataSources[1].uid"
+    value = "loki"
+  }
+
+  set {
+    name  = "grafana.additionalDataSources[1].type"
+    value = "loki"
+  }
+
+  set {
+    name  = "grafana.additionalDataSources[1].access"
+    value = "proxy"
+  }
+
+  set {
+    name  = "grafana.additionalDataSources[1].url"
+    value = "http://loki-gateway.default.svc.cluster.local"
+  }
+
+  set {
+    name  = "grafana.additionalDataSources[1].isDefault"
+    value = "false"
+  }
+
+  set {
+    name  = "grafana.additionalDataSources[1].editable"
+    value = "true"
+  }
+
   # prod: AlertManager 활성화
   set {
     name  = "alertmanager.enabled"
@@ -260,6 +363,223 @@ resource "helm_release" "kube_prometheus_stack" {
   depends_on = [
     module.eks,
     kubernetes_storage_class_v1.gp3,
+  ]
+}
+
+resource "helm_release" "loki" {
+  name             = "loki"
+  repository       = "https://grafana.github.io/helm-charts"
+  chart            = "loki"
+  version          = "6.24.0"
+  namespace        = "default"
+  create_namespace = false
+  timeout          = 600
+
+  values = [
+    yamlencode({
+      loki = {
+        auth_enabled = false
+        commonConfig = {
+          replication_factor = 1
+        }
+        schemaConfig = {
+          configs = [{
+            from         = "2024-04-01"
+            store        = "tsdb"
+            object_store = "s3"
+            schema       = "v13"
+            index = {
+              prefix = "loki_index_"
+              period = "24h"
+            }
+          }]
+        }
+        storage_config = {
+          aws = {
+            region           = var.aws_region
+            bucketnames      = module.s3.log_bucket_name
+            s3forcepathstyle = false
+          }
+        }
+        storage = {
+          type = "s3"
+          bucketNames = {
+            chunks = module.s3.log_bucket_name
+            ruler  = module.s3.log_bucket_name
+          }
+          s3 = {
+            region = var.aws_region
+          }
+        }
+        limits_config = {
+          allow_structured_metadata = true
+          volume_enabled            = true
+          retention_period          = "720h"
+        }
+        compactor = {
+          retention_enabled    = true
+          delete_request_store = "s3"
+        }
+        ruler = {
+          enable_api = true
+          storage = {
+            type = "s3"
+            s3 = {
+              region           = var.aws_region
+              bucketnames      = module.s3.log_bucket_name
+              s3forcepathstyle = false
+            }
+          }
+        }
+      }
+
+      serviceAccount = {
+        create = true
+        name   = "loki"
+        annotations = {
+          "eks.amazonaws.com/role-arn" = aws_iam_role.loki_s3.arn
+        }
+      }
+
+      deploymentMode = "SingleBinary"
+
+      singleBinary = {
+        replicas = 1
+        persistence = {
+          enabled                        = true
+          storageClass                   = kubernetes_storage_class_v1.gp3.metadata[0].name
+          size                           = "30Gi"
+          enableStatefulSetAutoDeletePVC = false
+        }
+      }
+
+      backend = { replicas = 0 }
+      read    = { replicas = 0 }
+      write   = { replicas = 0 }
+
+      ingester       = { replicas = 0 }
+      querier        = { replicas = 0 }
+      queryFrontend  = { replicas = 0 }
+      queryScheduler = { replicas = 0 }
+      distributor    = { replicas = 0 }
+      compactor      = { replicas = 0 }
+      indexGateway   = { replicas = 0 }
+      bloomPlanner   = { replicas = 0 }
+      bloomBuilder   = { replicas = 0 }
+      bloomGateway   = { replicas = 0 }
+
+      gateway = {
+        enabled = true
+        service = {
+          type = "ClusterIP"
+        }
+      }
+
+      chunksCache = {
+        enabled = false
+      }
+
+      resultsCache = {
+        enabled = false
+      }
+
+      minio = {
+        enabled = false
+      }
+    })
+  ]
+
+  depends_on = [
+    module.eks,
+    kubernetes_storage_class_v1.gp3,
+    aws_iam_role_policy_attachment.loki_s3,
+  ]
+}
+
+resource "helm_release" "alloy" {
+  name             = "alloy"
+  repository       = "https://grafana.github.io/helm-charts"
+  chart            = "alloy"
+  version          = "0.11.0"
+  namespace        = "default"
+  create_namespace = false
+  timeout          = 300
+
+  values = [
+    yamlencode({
+      controller = {
+        type = "daemonset"
+      }
+
+      alloy = {
+        mounts = {
+          varlog = true
+        }
+        configMap = {
+          create  = true
+          content = <<-EOT
+            discovery.kubernetes "pods" {
+              role = "pod"
+            }
+
+            discovery.relabel "pods" {
+              targets = discovery.kubernetes.pods.targets
+
+              rule {
+                source_labels = ["__meta_kubernetes_namespace"]
+                target_label  = "namespace"
+              }
+
+              rule {
+                source_labels = ["__meta_kubernetes_pod_name"]
+                target_label  = "pod"
+              }
+
+              rule {
+                source_labels = ["__meta_kubernetes_pod_container_name"]
+                target_label  = "container"
+              }
+
+              rule {
+                source_labels = ["__meta_kubernetes_pod_label_app_kubernetes_io_name"]
+                target_label  = "app"
+              }
+
+              rule {
+                source_labels = ["__meta_kubernetes_pod_uid", "__meta_kubernetes_pod_container_name"]
+                separator     = "/"
+                target_label  = "__path__"
+                replacement   = "/var/log/pods/*$1/*.log"
+              }
+            }
+
+            local.file_match "pods" {
+              path_targets = discovery.relabel.pods.output
+            }
+
+            loki.source.file "pods" {
+              targets    = local.file_match.pods.targets
+              forward_to = [loki.process.pods.receiver]
+            }
+
+            loki.process "pods" {
+              stage.cri {}
+              forward_to = [loki.write.default.receiver]
+            }
+
+            loki.write "default" {
+              endpoint {
+                url = "http://loki-gateway.default.svc.cluster.local/loki/api/v1/push"
+              }
+            }
+          EOT
+        }
+      }
+    })
+  ]
+
+  depends_on = [
+    helm_release.loki,
   ]
 }
 
