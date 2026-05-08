@@ -1108,8 +1108,8 @@
       {
         "current": {
           "selected": true,
-          "text": "All",
-          "value": "*"
+          "text": "pickup-prod-rds",
+          "value": "pickup-prod-rds"
         },
         "datasource": {
           "type": "cloudwatch",
@@ -1117,15 +1117,14 @@
         },
         "definition": "dimension_values($region,AWS/RDS,CPUUtilization,DBInstanceIdentifier)",
         "hide": 0,
-        "includeAll": true,
-        "allValue": "*",
+        "includeAll": false,
         "label": "RDS DB",
         "multi": false,
         "name": "db_id",
         "options": [],
         "query": "dimension_values($region,AWS/RDS,CPUUtilization,DBInstanceIdentifier)",
         "refresh": 1,
-        "regex": "",
+        "regex": "/^pickup-prod-.*/",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
@@ -1133,8 +1132,8 @@
       {
         "current": {
           "selected": true,
-          "text": "All",
-          "value": "*"
+          "text": "targetgroup/pickup-prod-tg/77f05fb5986f4411",
+          "value": "targetgroup/pickup-prod-tg/77f05fb5986f4411"
         },
         "datasource": {
           "type": "cloudwatch",
@@ -1142,15 +1141,14 @@
         },
         "definition": "dimension_values($region,AWS/ApplicationELB,UnHealthyHostCount,TargetGroup)",
         "hide": 0,
-        "includeAll": true,
-        "allValue": "*",
+        "includeAll": false,
         "label": "ALB TargetGroup",
         "multi": false,
         "name": "alb_tg",
         "options": [],
         "query": "dimension_values($region,AWS/ApplicationELB,UnHealthyHostCount,TargetGroup)",
         "refresh": 1,
-        "regex": "",
+        "regex": "/^targetgroup\\/pickup-prod-.*/",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
@@ -1158,8 +1156,8 @@
       {
         "current": {
           "selected": true,
-          "text": "All",
-          "value": "*"
+          "text": "pickup-prod-image-resize",
+          "value": "pickup-prod-image-resize"
         },
         "datasource": {
           "type": "cloudwatch",
@@ -1167,15 +1165,14 @@
         },
         "definition": "dimension_values($region,AWS/Lambda,Invocations,FunctionName)",
         "hide": 0,
-        "includeAll": true,
-        "allValue": "*",
+        "includeAll": false,
         "label": "Lambda",
         "multi": false,
         "name": "lambda_fn",
         "options": [],
         "query": "dimension_values($region,AWS/Lambda,Invocations,FunctionName)",
         "refresh": 1,
-        "regex": "",
+        "regex": "/^pickup-prod-.*/",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
@@ -1183,8 +1180,8 @@
       {
         "current": {
           "selected": true,
-          "text": "All",
-          "value": "*"
+          "text": "app/pickup-prod-alb/1fd67e88c3b89a03",
+          "value": "app/pickup-prod-alb/1fd67e88c3b89a03"
         },
         "datasource": {
           "type": "cloudwatch",
@@ -1192,15 +1189,14 @@
         },
         "definition": "dimension_values($region,AWS/ApplicationELB,RequestCount,LoadBalancer)",
         "hide": 0,
-        "includeAll": true,
-        "allValue": "*",
+        "includeAll": false,
         "label": "ALB",
         "multi": false,
         "name": "alb_lb",
         "options": [],
         "query": "dimension_values($region,AWS/ApplicationELB,RequestCount,LoadBalancer)",
         "refresh": 1,
-        "regex": "",
+        "regex": "/^app\\/pickup-prod-.*/",
         "skipUrlSync": false,
         "sort": 1,
         "type": "query"
@@ -1208,27 +1204,26 @@
       {
         "current": {
           "selected": true,
-          "text": "All",
-          "value": "*"
+          "text": "E1MWHZT8XVD46W",
+          "value": "E1MWHZT8XVD46W"
         },
         "datasource": {
           "type": "cloudwatch",
           "uid": "cloudwatch"
         },
-        "definition": "dimension_values(us-east-1,AWS/CloudFront,Requests,DistributionId)",
+        "definition": "E1MWHZT8XVD46W,EKR61DZSI9YNW",
         "hide": 0,
-        "includeAll": true,
-        "allValue": "*",
+        "includeAll": false,
         "label": "CloudFront",
         "multi": false,
         "name": "cf_dist",
         "options": [],
-        "query": "dimension_values(us-east-1,AWS/CloudFront,Requests,DistributionId)",
+        "query": "E1MWHZT8XVD46W,EKR61DZSI9YNW",
         "refresh": 1,
         "regex": "",
         "skipUrlSync": false,
         "sort": 1,
-        "type": "query"
+        "type": "custom"
       }
     ]
   },

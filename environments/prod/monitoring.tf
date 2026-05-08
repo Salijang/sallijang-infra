@@ -666,20 +666,22 @@ resource "kubectl_manifest" "autoscaling_alerts" {
           rules:
             - alert: HPADesiredReplicasAboveCurrent
               expr: |
-                kube_horizontalpodautoscaler_status_desired_replicas
+                kube_horizontalpodautoscaler_status_desired_replicas{namespace="default"}
                 >
-                kube_horizontalpodautoscaler_status_current_replicas
+                kube_horizontalpodautoscaler_status_current_replicas{namespace="default"}
               for: 3m
               labels:
+                environment: prod
                 severity: warning
               annotations:
                 summary: "HPA wants more replicas than currently available"
                 description: "HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} desired replicas has been above current replicas for more than 3 minutes."
 
             - alert: HPAScalingLimited
-              expr: kube_horizontalpodautoscaler_status_condition{condition="ScalingLimited",status="true"} == 1
+              expr: kube_horizontalpodautoscaler_status_condition{namespace="default",condition="ScalingLimited",status="true"} == 1
               for: 5m
               labels:
+                environment: prod
                 severity: warning
               annotations:
                 summary: "HPA scaling is limited"
@@ -687,12 +689,13 @@ resource "kubectl_manifest" "autoscaling_alerts" {
 
             - alert: PodsPendingOrUnschedulable
               expr: |
-                sum by (namespace) (kube_pod_status_phase{phase="Pending"})
+                sum by (namespace) (kube_pod_status_phase{namespace="default",phase="Pending"})
                 +
-                sum by (namespace) (kube_pod_status_unschedulable)
+                sum by (namespace) (kube_pod_status_unschedulable{namespace="default"})
                 > 0
               for: 3m
               labels:
+                environment: prod
                 severity: warning
               annotations:
                 summary: "Pods are pending or unschedulable"
@@ -702,6 +705,7 @@ resource "kubectl_manifest" "autoscaling_alerts" {
               expr: karpenter_scheduler_queue_depth > 0
               for: 3m
               labels:
+                environment: prod
                 severity: warning
               annotations:
                 summary: "Karpenter scheduler queue has backlog"
@@ -711,6 +715,7 @@ resource "kubectl_manifest" "autoscaling_alerts" {
               expr: sum(increase(karpenter_cloudprovider_errors_total[5m])) > 0
               for: 1m
               labels:
+                environment: prod
                 severity: warning
               annotations:
                 summary: "Karpenter cloud provider errors detected"
@@ -723,6 +728,7 @@ resource "kubectl_manifest" "autoscaling_alerts" {
                 ) > 80
               for: 5m
               labels:
+                environment: prod
                 severity: warning
               annotations:
                 summary: "Karpenter NodePool usage is near its limit"
