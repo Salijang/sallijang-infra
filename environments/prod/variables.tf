@@ -79,6 +79,31 @@ variable "grafana_admin_password" {
   sensitive = true
 }
 
+variable "alertmanager_slack_webhook_url" {
+  type        = string
+  description = "Alertmanager Slack incoming webhook URL. 비우면 PrometheusRule Slack 발송을 구성하지 않음."
+  default     = ""
+  sensitive   = true
+}
+
+variable "alertmanager_slack_channel" {
+  type        = string
+  description = "Alertmanager가 알림을 보낼 Slack 채널명."
+  default     = "#alerts"
+}
+
+variable "slack_workspace_id" {
+  type        = string
+  description = "AWS Chatbot Slack workspace/team ID. 비우면 CloudWatch Alarm Slack 발송을 구성하지 않음."
+  default     = ""
+}
+
+variable "slack_channel_id" {
+  type        = string
+  description = "AWS Chatbot Slack channel ID. 비우면 CloudWatch Alarm Slack 발송을 구성하지 않음."
+  default     = ""
+}
+
 # ── Lambda 코드 위치 ──────────────────────────────────────────────────
 variable "image_resize_code_s3_key" {
   type    = string

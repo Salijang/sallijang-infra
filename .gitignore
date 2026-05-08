@@ -6,6 +6,7 @@
 *.tfplan
 terraform.tfvars
 terraform.tfvars.local
+*.tfvars
 override.tf
 override.tf.json
 *_override.tf
