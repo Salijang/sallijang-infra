@@ -93,3 +93,15 @@ variable "sqs_dlq_arn" {
   description = "DLQ ARN — sns-notify Lambda 이벤트 소스. 비우면 DLQ 트리거 미생성."
   default     = ""
 }
+
+variable "enable_lambda_insights" {
+  type        = bool
+  description = "CloudWatch Lambda Insights 활성화 여부. init_duration 등 LambdaInsights 네임스페이스 메트릭 수집에 필요."
+  default     = false
+}
+
+variable "lambda_insights_layer_arn" {
+  type        = string
+  description = "Lambda Insights extension layer ARN. enable_lambda_insights = true이면 필수."
+  default     = ""
+}

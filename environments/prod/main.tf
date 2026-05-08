@@ -51,6 +51,10 @@ module "rds" {
   skip_final_snapshot = false
   deletion_protection = true
   enable_read_replica = false
+
+  enable_performance_insights           = true
+  performance_insights_retention_period = 7
+  enhanced_monitoring_interval          = 60
 }
 
 module "eks" {
@@ -264,4 +268,7 @@ module "lambda" {
   code_s3_bucket           = module.s3.lambda_bucket_name
   image_resize_code_s3_key = var.image_resize_code_s3_key
   sns_notify_code_s3_key   = var.sns_notify_code_s3_key
+
+  enable_lambda_insights    = true
+  lambda_insights_layer_arn = "arn:aws:lambda:ap-northeast-2:580247275435:layer:LambdaInsightsExtension:63"
 }

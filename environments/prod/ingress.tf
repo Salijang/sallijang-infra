@@ -39,6 +39,21 @@ resource "helm_release" "ingress_nginx" {
   }
 
   set {
+    name  = "controller.metrics.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "controller.metrics.serviceMonitor.enabled"
+    value = "true"
+  }
+
+  set {
+    name  = "controller.metrics.serviceMonitor.additionalLabels.release"
+    value = "kube-prometheus-stack"
+  }
+
+  set {
     name  = "controller.resources.requests.cpu"
     value = "200m"
   }

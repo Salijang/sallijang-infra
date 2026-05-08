@@ -95,3 +95,26 @@ variable "enable_read_replica" {
   description = "Read Replica 생성 여부 (prod: true)"
   default     = false
 }
+
+variable "enable_performance_insights" {
+  type        = bool
+  description = "RDS Performance Insights 활성화 여부"
+  default     = false
+}
+
+variable "performance_insights_retention_period" {
+  type        = number
+  description = "Performance Insights 데이터 보존 기간(일). 기본 7일."
+  default     = 7
+}
+
+variable "enhanced_monitoring_interval" {
+  type        = number
+  description = "RDS Enhanced Monitoring 수집 주기(초). 0이면 비활성화."
+  default     = 0
+
+  validation {
+    condition     = contains([0, 1, 5, 10, 15, 30, 60], var.enhanced_monitoring_interval)
+    error_message = "enhanced_monitoring_interval은 0, 1, 5, 10, 15, 30, 60 중 하나여야 합니다."
+  }
+}

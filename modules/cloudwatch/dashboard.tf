@@ -15,12 +15,17 @@ locals {
         view   = "timeSeries"
         stat   = "Sum"
         period = 300
-        metrics = [
-          ["AWS/Lambda", "Invocations", "FunctionName", fn],
-          [".", "Errors", ".", "."],
-          [".", "Throttles", ".", "."],
-          [".", "Duration", ".", ".", { stat = "p95" }],
-        ]
+        metrics = concat(
+          [
+            ["AWS/Lambda", "Invocations", "FunctionName", fn],
+            [".", "Errors", ".", "."],
+            [".", "Throttles", ".", "."],
+            [".", "Duration", ".", ".", { stat = "p95" }],
+          ],
+          var.enable_extended_metrics ? [
+            ["LambdaInsights", "init_duration", "function_name", fn, { stat = "p95" }],
+          ] : []
+        )
       }
     }
   ]
@@ -35,15 +40,41 @@ locals {
       view   = "timeSeries"
       stat   = "Average"
       period = 300
-      metrics = [
-        ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", var.rds_instance_id],
-        [".", "FreeableMemory", ".", "."],
-        [".", "DatabaseConnections", ".", "."],
-        [".", "ReadIOPS", ".", "."],
-        [".", "WriteIOPS", ".", "."],
-      ]
+      metrics = concat(
+        [
+          ["AWS/RDS", "CPUUtilization", "DBInstanceIdentifier", var.rds_instance_id],
+          [".", "FreeableMemory", ".", "."],
+          [".", "DatabaseConnections", ".", "."],
+          [".", "ReadIOPS", ".", "."],
+          [".", "WriteIOPS", ".", "."],
+        ],
+        var.enable_extended_metrics ? [
+          [".", "DBLoad", ".", "."],
+          [".", "DBLoadCPU", ".", "."],
+          [".", "DBLoadNonCPU", ".", "."],
+          [".", "DBLoadRelativeToNumVCPUs", ".", "."],
+        ] : []
+      )
     }
   }]
+
+  rds_replication_lag_widgets = [
+    for id in(var.enable_extended_metrics ? var.rds_replica_instance_ids : []) : {
+      type   = "metric"
+      width  = 12
+      height = 6
+      properties = {
+        title  = "RDS ReplicationLag — ${id}"
+        region = var.aws_region
+        view   = "timeSeries"
+        stat   = "Average"
+        period = 300
+        metrics = [
+          ["AWS/RDS", "ReplicationLag", "DBInstanceIdentifier", id],
+        ]
+      }
+    }
+  ]
 
   alb_widget = var.alb_arn_suffix == "" ? [] : [{
     type   = "metric"
@@ -54,12 +85,17 @@ locals {
       region = var.aws_region
       view   = "timeSeries"
       period = 300
-      metrics = [
-        ["AWS/ApplicationELB", "RequestCount", "LoadBalancer", var.alb_arn_suffix, { stat = "Sum" }],
-        [".", "HTTPCode_ELB_5XX_Count", ".", ".", { stat = "Sum" }],
-        [".", "HTTPCode_Target_5XX_Count", ".", ".", { stat = "Sum" }],
-        [".", "TargetResponseTime", ".", ".", { stat = "p95" }],
-      ]
+      metrics = concat(
+        [
+          ["AWS/ApplicationELB", "RequestCount", "LoadBalancer", var.alb_arn_suffix, { stat = "Sum" }],
+          [".", "HTTPCode_ELB_5XX_Count", ".", ".", { stat = "Sum" }],
+          [".", "HTTPCode_Target_5XX_Count", ".", ".", { stat = "Sum" }],
+          [".", "TargetResponseTime", ".", ".", { stat = "p95" }],
+        ],
+        var.enable_extended_metrics && var.alb_target_group_arn_suffix != "" ? [
+          ["AWS/ApplicationELB", "UnHealthyHostCount", "LoadBalancer", var.alb_arn_suffix, "TargetGroup", var.alb_target_group_arn_suffix, { stat = "Average" }],
+        ] : []
+      )
     }
   }]
 
@@ -73,12 +109,17 @@ locals {
         region = "us-east-1" # CloudFront 메트릭은 항상 us-east-1
         view   = "timeSeries"
         period = 300
-        metrics = [
-          ["AWS/CloudFront", "Requests", "DistributionId", id, "Region", "Global", { stat = "Sum" }],
-          [".", "5xxErrorRate", ".", ".", ".", ".", { stat = "Average" }],
-          [".", "4xxErrorRate", ".", ".", ".", ".", { stat = "Average" }],
-          [".", "BytesDownloaded", ".", ".", ".", ".", { stat = "Sum" }],
-        ]
+        metrics = concat(
+          [
+            ["AWS/CloudFront", "Requests", "DistributionId", id, "Region", "Global", { stat = "Sum" }],
+            [".", "5xxErrorRate", ".", ".", ".", ".", { stat = "Average" }],
+            [".", "4xxErrorRate", ".", ".", ".", ".", { stat = "Average" }],
+            [".", "BytesDownloaded", ".", ".", ".", ".", { stat = "Sum" }],
+          ],
+          var.enable_extended_metrics ? [
+            [".", "CacheHitRate", ".", ".", ".", ".", { stat = "Average" }],
+          ] : []
+        )
       }
     }
   ]
@@ -86,6 +127,7 @@ locals {
   dashboard_body = {
     widgets = concat(
       local.rds_widget,
+      local.rds_replication_lag_widgets,
       local.lambda_widgets,
       local.alb_widget,
       local.cloudfront_widgets,

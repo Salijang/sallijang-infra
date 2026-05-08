@@ -602,6 +602,139 @@ resource "kubernetes_config_map_v1" "grafana_dashboard_cloudwatch_core" {
   depends_on = [helm_release.kube_prometheus_stack]
 }
 
+resource "kubernetes_config_map_v1" "grafana_dashboard_autoscaling_hpa_karpenter" {
+  metadata {
+    name      = "grafana-dashboard-autoscaling-hpa-karpenter"
+    namespace = "default"
+    labels = {
+      grafana_dashboard = "1"
+    }
+    annotations = {
+      grafana_folder = "Kubernetes"
+    }
+  }
+
+  data = {
+    "autoscaling-hpa-karpenter.json" = file("${path.module}/../../dashboards/autoscaling-hpa-karpenter.json")
+  }
+
+  depends_on = [helm_release.kube_prometheus_stack]
+}
+
+resource "kubectl_manifest" "karpenter_service_monitor" {
+  yaml_body = <<-YAML
+    apiVersion: monitoring.coreos.com/v1
+    kind: ServiceMonitor
+    metadata:
+      name: karpenter
+      namespace: default
+      labels:
+        release: kube-prometheus-stack
+    spec:
+      namespaceSelector:
+        matchNames:
+          - karpenter
+      selector:
+        matchLabels:
+          app.kubernetes.io/instance: karpenter
+          app.kubernetes.io/name: karpenter
+      endpoints:
+        - port: http-metrics
+          path: /metrics
+          interval: 30s
+          scrapeTimeout: 10s
+  YAML
+
+  depends_on = [
+    helm_release.kube_prometheus_stack,
+    helm_release.karpenter,
+  ]
+}
+
+resource "kubectl_manifest" "autoscaling_alerts" {
+  yaml_body = <<-YAML
+    apiVersion: monitoring.coreos.com/v1
+    kind: PrometheusRule
+    metadata:
+      name: autoscaling-hpa-karpenter
+      namespace: default
+      labels:
+        release: kube-prometheus-stack
+    spec:
+      groups:
+        - name: autoscaling.hpa-karpenter
+          rules:
+            - alert: HPADesiredReplicasAboveCurrent
+              expr: |
+                kube_horizontalpodautoscaler_status_desired_replicas
+                >
+                kube_horizontalpodautoscaler_status_current_replicas
+              for: 3m
+              labels:
+                severity: warning
+              annotations:
+                summary: "HPA wants more replicas than currently available"
+                description: "HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} desired replicas has been above current replicas for more than 3 minutes."
+
+            - alert: HPAScalingLimited
+              expr: kube_horizontalpodautoscaler_status_condition{condition="ScalingLimited",status="true"} == 1
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: "HPA scaling is limited"
+                description: "HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} is capped by min or max replicas."
+
+            - alert: PodsPendingOrUnschedulable
+              expr: |
+                sum by (namespace) (kube_pod_status_phase{phase="Pending"})
+                +
+                sum by (namespace) (kube_pod_status_unschedulable)
+                > 0
+              for: 3m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Pods are pending or unschedulable"
+                description: "Namespace {{ $labels.namespace }} has pending or unschedulable pods for more than 3 minutes."
+
+            - alert: KarpenterSchedulerQueueBacklog
+              expr: karpenter_scheduler_queue_depth > 0
+              for: 3m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Karpenter scheduler queue has backlog"
+                description: "Karpenter has pods waiting in its scheduling queue for more than 3 minutes."
+
+            - alert: KarpenterCloudProviderErrors
+              expr: sum(increase(karpenter_cloudprovider_errors_total[5m])) > 0
+              for: 1m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Karpenter cloud provider errors detected"
+                description: "Karpenter cloud provider calls are returning errors."
+
+            - alert: KarpenterNodePoolLimitHigh
+              expr: |
+                max by (nodepool, resource_type, resource) (
+                  100 * karpenter_nodepools_usage / karpenter_nodepools_limit
+                ) > 80
+              for: 5m
+              labels:
+                severity: warning
+              annotations:
+                summary: "Karpenter NodePool usage is near its limit"
+                description: "NodePool {{ $labels.nodepool }} resource usage is over 80% of its configured limit."
+  YAML
+
+  depends_on = [
+    helm_release.kube_prometheus_stack,
+    kubectl_manifest.karpenter_service_monitor,
+  ]
+}
+
 # ── CloudWatch (AWS 관리형 리소스 모니터링) ───────────────────────────
 # K8s는 위 Prometheus/Grafana, AWS 리소스(RDS/Lambda/ALB/CloudFront)는 CloudWatch로 분리
 module "cloudwatch" {
@@ -618,9 +751,15 @@ module "cloudwatch" {
   enable_alarms = true
   sns_topic_arn = module.sns.topic_arn
 
-  rds_instance_id   = module.rds.instance_id
-  alb_arn_suffix    = module.alb.arn_suffix
-  create_alb_alarms = true
+  enable_extended_metrics = true
+
+  rds_instance_id             = module.rds.instance_id
+  alb_arn_suffix              = module.alb.arn_suffix
+  alb_target_group_arn_suffix = module.alb.target_group_arn_suffix
+  create_alb_alarms           = true
+  rds_replica_instance_ids = compact([
+    module.rds.read_replica_instance_id,
+  ])
   cloudfront_distribution_ids = [
     module.cloudfront.distribution_id,
     module.cloudfront.frontend_distribution_id,
