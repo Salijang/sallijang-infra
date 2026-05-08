@@ -35,6 +35,34 @@ resource "aws_iam_role_policy" "rds_proxy_secrets" {
   })
 }
 
+# ── RDS Enhanced Monitoring IAM Role ─────────────────────────────────
+resource "aws_iam_role" "rds_enhanced_monitoring" {
+  count = var.enhanced_monitoring_interval > 0 ? 1 : 0
+
+  name = "${local.name_prefix}-rds-enhanced-monitoring-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect    = "Allow"
+      Principal = { Service = "monitoring.rds.amazonaws.com" }
+      Action    = "sts:AssumeRole"
+    }]
+  })
+
+  tags = {
+    Name      = "${local.name_prefix}-rds-enhanced-monitoring-role"
+    ManagedBy = "terraform"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
+  count = var.enhanced_monitoring_interval > 0 ? 1 : 0
+
+  role       = aws_iam_role.rds_enhanced_monitoring[0].name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+}
+
 # ── RDS Proxy 전용 Security Group ────────────────────────────────────
 # Proxy는 EKS 서브넷에 위치 → EKS 워커노드에서 5432 수신, RDS 방향 송신
 resource "aws_security_group" "rds_proxy" {
@@ -152,9 +180,17 @@ resource "aws_db_instance" "main" {
   skip_final_snapshot = var.skip_final_snapshot
   deletion_protection = var.deletion_protection
 
+  performance_insights_enabled          = var.enable_performance_insights
+  performance_insights_retention_period = var.enable_performance_insights ? var.performance_insights_retention_period : null
+
+  monitoring_interval = var.enhanced_monitoring_interval
+  monitoring_role_arn = var.enhanced_monitoring_interval > 0 ? aws_iam_role.rds_enhanced_monitoring[0].arn : null
+
   lifecycle {
     ignore_changes = [engine_version]
   }
+
+  depends_on = [aws_iam_role_policy_attachment.rds_enhanced_monitoring]
 
   tags = { Name = "${local.name_prefix}-rds" }
 }

@@ -44,6 +44,12 @@ resource "aws_iam_role_policy_attachment" "lambda_vpc" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaVPCAccessExecutionRole"
 }
 
+resource "aws_iam_role_policy_attachment" "lambda_insights" {
+  count      = var.deploy_lambda && var.enable_lambda_insights ? 1 : 0
+  role       = aws_iam_role.lambda[0].name
+  policy_arn = "arn:aws:iam::aws:policy/CloudWatchLambdaInsightsExecutionRolePolicy"
+}
+
 # 서비스별 추가 권한
 resource "aws_iam_role_policy" "lambda" {
   count = var.deploy_lambda ? 1 : 0
@@ -116,6 +122,7 @@ resource "aws_lambda_function" "image_resize" {
   runtime       = var.runtime
   timeout       = var.timeout
   memory_size   = var.memory_size
+  layers        = var.enable_lambda_insights ? [var.lambda_insights_layer_arn] : []
 
   s3_bucket = var.code_s3_bucket
   s3_key    = var.image_resize_code_s3_key
@@ -174,6 +181,7 @@ resource "aws_lambda_function" "sns_notify" {
   runtime       = var.sns_notify_runtime
   timeout       = var.timeout
   memory_size   = var.memory_size
+  layers        = var.enable_lambda_insights ? [var.lambda_insights_layer_arn] : []
 
   s3_bucket = var.code_s3_bucket
   s3_key    = var.sns_notify_code_s3_key

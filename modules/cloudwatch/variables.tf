@@ -45,6 +45,12 @@ variable "alb_arn_suffix" {
   default     = ""
 }
 
+variable "alb_target_group_arn_suffix" {
+  type        = string
+  description = "ALB Target Group ARN suffix. UnHealthyHostCount는 LoadBalancer와 TargetGroup 차원을 함께 사용."
+  default     = ""
+}
+
 variable "create_alb_alarms" {
   type        = bool
   description = "ALB 알람 생성 여부. alb_arn_suffix 값의 plan 시점 확정 여부와 분리하기 위한 정적 플래그."
@@ -63,6 +69,12 @@ variable "cloudfront_distribution_ids_by_name" {
   default     = {}
 }
 
+variable "rds_replica_instance_ids" {
+  type        = list(string)
+  description = "ReplicationLag 감시 대상 RDS Read Replica DBInstanceIdentifier 리스트."
+  default     = []
+}
+
 variable "lambda_timeout_seconds" {
   type        = number
   description = "Lambda Duration p95 알람 임계 계산용 타임아웃(초). Duration > 80% × timeout일 때 알람."
@@ -74,6 +86,12 @@ variable "enable_dashboard" {
   type        = bool
   description = "통합 CloudWatch 대시보드 생성 여부."
   default     = true
+}
+
+variable "enable_extended_metrics" {
+  type        = bool
+  description = "prod 확장 모니터링 메트릭(Lambda init, ALB unhealthy host, CloudFront hit rate, RDS PI/replica)을 대시보드와 알람에 포함할지 여부."
+  default     = false
 }
 
 variable "aws_region" {

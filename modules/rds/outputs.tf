@@ -37,3 +37,8 @@ output "read_replica_endpoint" {
   description = "Read Replica 엔드포인트 (enable_read_replica = true 시에만 값 있음)"
   value       = var.enable_read_replica ? aws_db_instance.read_replica[0].endpoint : null
 }
+
+output "read_replica_instance_id" {
+  description = "Read Replica DBInstanceIdentifier (enable_read_replica = true 시에만 값 있음)"
+  value       = var.enable_read_replica ? aws_db_instance.read_replica[0].identifier : null
+}
