@@ -104,6 +104,13 @@ resource "aws_iam_role_policy" "github_actions" {
         ]
       },
       {
+        # Lambda 함수 코드 갱신
+        Sid      = "LambdaUpdateCode"
+        Effect   = "Allow"
+        Action   = ["lambda:UpdateFunctionCode"]
+        Resource = ["arn:aws:lambda:ap-northeast-2:594486941613:function:pickup-*"]
+      },
+      {
         # 프론트엔드 S3 버킷 동기화
         Sid    = "FrontendS3Sync"
         Effect = "Allow"
