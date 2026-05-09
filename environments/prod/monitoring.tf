@@ -834,7 +834,6 @@ resource "kubectl_manifest" "autoscaling_alerts" {
               labels:
                 environment: prod
                 severity: warning
-                slack_alert: "true"
               annotations:
                 summary: "HPA scaling is limited"
                 description: "HPA {{ $labels.namespace }}/{{ $labels.horizontalpodautoscaler }} is capped by min or max replicas."
