@@ -757,6 +757,25 @@ resource "kubernetes_config_map_v1" "grafana_dashboard_autoscaling_hpa_karpenter
   depends_on = [helm_release.kube_prometheus_stack]
 }
 
+resource "kubernetes_config_map_v1" "grafana_dashboard_hot_product_reservation_load" {
+  metadata {
+    name      = "grafana-dashboard-hot-product-reservation-load"
+    namespace = "default"
+    labels = {
+      grafana_dashboard = "1"
+    }
+    annotations = {
+      grafana_folder = "Load Tests"
+    }
+  }
+
+  data = {
+    "sallijang-hot-product-reservation-load.json" = file("${path.module}/../../dashboards/sallijang-hot-product-reservation-load.json")
+  }
+
+  depends_on = [helm_release.kube_prometheus_stack]
+}
+
 resource "kubectl_manifest" "karpenter_service_monitor" {
   yaml_body = <<-YAML
     apiVersion: monitoring.coreos.com/v1
