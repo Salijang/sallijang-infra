@@ -1,0 +1,92 @@
+# Prod Karpenter NodePool for controlled load-test overflow capacity.
+#
+# Apply:
+#   kubectl --kubeconfig /private/tmp/pickup-prod-kubeconfig apply -f k8s-manifests/karpenter-prod-general.yaml
+#
+# Notes:
+#   - Karpenter provisions nodes only when pods are Pending because they cannot be scheduled.
+#   - This pool is on-demand only and capped to avoid accidental cost growth in prod.
+
+apiVersion: karpenter.k8s.aws/v1
+kind: EC2NodeClass
+metadata:
+  name: prod-general
+spec:
+  amiSelectorTerms:
+    - alias: al2@latest
+
+  role: pickup-prod-karpenter-node-role
+
+  subnetSelectorTerms:
+    - id: subnet-0324c8666da50b2e7
+    - id: subnet-0b813e2d135801ade
+
+  securityGroupSelectorTerms:
+    - id: sg-047c42c733fd0267a
+    - id: sg-012e635145c24c63a
+
+  blockDeviceMappings:
+    - deviceName: /dev/xvda
+      ebs:
+        volumeSize: 50Gi
+        volumeType: gp3
+        encrypted: true
+        deleteOnTermination: true
+
+  metadataOptions:
+    httpEndpoint: enabled
+    httpProtocolIPv6: disabled
+    httpPutResponseHopLimit: 2
+    httpTokens: required
+
+  tags:
+    Environment: prod
+    Name: pickup-prod-karpenter-node
+    managed-by: karpenter
+
+---
+apiVersion: karpenter.sh/v1
+kind: NodePool
+metadata:
+  name: prod-general
+spec:
+  template:
+    metadata:
+      labels:
+        managed-by: karpenter
+        node-role: general
+    spec:
+      nodeClassRef:
+        group: karpenter.k8s.aws
+        kind: EC2NodeClass
+        name: prod-general
+
+      requirements:
+        - key: kubernetes.io/arch
+          operator: In
+          values: ["amd64"]
+        - key: kubernetes.io/os
+          operator: In
+          values: ["linux"]
+        - key: karpenter.sh/capacity-type
+          operator: In
+          values: ["on-demand"]
+        - key: karpenter.k8s.aws/instance-family
+          operator: In
+          values: ["t3"]
+        - key: karpenter.k8s.aws/instance-size
+          operator: In
+          values: ["large", "xlarge"]
+        - key: topology.kubernetes.io/zone
+          operator: In
+          values: ["ap-northeast-2a", "ap-northeast-2c"]
+
+      expireAfter: 720h
+
+  limits:
+    cpu: "8"
+    memory: 32Gi
+
+  disruption:
+    consolidationPolicy: WhenEmpty
+    consolidateAfter: 10m

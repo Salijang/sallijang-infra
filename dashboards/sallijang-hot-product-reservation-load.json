@@ -18,7 +18,6 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 1,
-  "id": null,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -33,16 +32,994 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
-            "lineWidth": 2
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "percentunit"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 12,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",pod=~\"order-deploy.*|product-deploy.*\",container!=\"\",image!=\"\"}[2m])) / sum by (pod) (kube_pod_container_resource_requests{namespace=\"$namespace\",pod=~\"order-deploy.*|product-deploy.*\",resource=\"cpu\"})",
+          "legendFormat": "{{ pod }}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Order/Product Pod CPU Usage / Request",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "id": 11,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"$namespace\",horizontalpodautoscaler=~\"order-hpa|product-hpa\"}",
+          "legendFormat": "{{ horizontalpodautoscaler }} current",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace=\"$namespace\",horizontalpodautoscaler=~\"order-hpa|product-hpa\"}",
+          "legendFormat": "{{ horizontalpodautoscaler }} desired",
+          "range": true,
+          "refId": "B"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "kube_horizontalpodautoscaler_spec_max_replicas{namespace=\"$namespace\",horizontalpodautoscaler=~\"order-hpa|product-hpa\"}",
+          "legendFormat": "{{ horizontalpodautoscaler }} max",
+          "range": true,
+          "refId": "C"
+        }
+      ],
+      "title": "Order/Product HPA Replicas",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "label": "CPUUtilization",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/RDS",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "label": "DatabaseConnections",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "DatabaseConnections",
+          "metricQueryType": 0,
+          "namespace": "AWS/RDS",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "label": "DBLoad",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "DBLoad",
+          "metricQueryType": 0,
+          "namespace": "AWS/RDS",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "DBInstanceIdentifier": "$db_id"
+          },
+          "label": "DBLoadNonCPU",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "DBLoadNonCPU",
+          "metricQueryType": 0,
+          "namespace": "AWS/RDS",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "D",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "title": "RDS Load / Connections",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "id": 17,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true,
+          "sortBy": "Last *",
+          "sortDesc": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "CacheClusterId": "$redis_cluster"
+          },
+          "label": "EngineCPUUtilization",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "EngineCPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/ElastiCache",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "CacheClusterId": "$redis_cluster"
+          },
+          "label": "CPUUtilization",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "CPUUtilization",
+          "metricQueryType": 0,
+          "namespace": "AWS/ElastiCache",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "CacheClusterId": "$redis_cluster"
+          },
+          "label": "CurrConnections",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "CurrConnections",
+          "metricQueryType": 0,
+          "namespace": "AWS/ElastiCache",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "CacheClusterId": "$redis_cluster"
+          },
+          "label": "NewConnections",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "NewConnections",
+          "metricQueryType": 0,
+          "namespace": "AWS/ElastiCache",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "D",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "CacheClusterId": "$redis_cluster"
+          },
+          "label": "Evictions",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "Evictions",
+          "metricQueryType": 0,
+          "namespace": "AWS/ElastiCache",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "E",
+          "region": "$region",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "ElastiCache Redis Saturation",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 17
+      },
+      "id": 18,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "QueueName": "$stock_deduct_queue"
+          },
+          "label": "Visible",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "ApproximateNumberOfMessagesVisible",
+          "metricQueryType": 0,
+          "namespace": "AWS/SQS",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "QueueName": "$stock_deduct_queue"
+          },
+          "label": "NotVisible",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "ApproximateNumberOfMessagesNotVisible",
+          "metricQueryType": 0,
+          "namespace": "AWS/SQS",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Average"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "QueueName": "$stock_deduct_queue"
+          },
+          "label": "OldestAge",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "ApproximateAgeOfOldestMessage",
+          "metricQueryType": 0,
+          "namespace": "AWS/SQS",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "$region",
+          "statistic": "Maximum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "QueueName": "$stock_deduct_queue"
+          },
+          "label": "Sent",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "NumberOfMessagesSent",
+          "metricQueryType": 0,
+          "namespace": "AWS/SQS",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "D",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "QueueName": "$stock_deduct_queue"
+          },
+          "label": "Deleted",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "NumberOfMessagesDeleted",
+          "metricQueryType": 0,
+          "namespace": "AWS/SQS",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "E",
+          "region": "$region",
+          "statistic": "Sum"
+        }
+      ],
+      "title": "SQS Stock Deduct Queue",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "cloudwatch",
+        "uid": "cloudwatch"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 17
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "LoadBalancer": "$alb_lb"
+          },
+          "label": "RequestCount",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "RequestCount",
+          "metricQueryType": 0,
+          "namespace": "AWS/ApplicationELB",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "A",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "LoadBalancer": "$alb_lb"
+          },
+          "label": "ELB 5xx",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "HTTPCode_ELB_5XX_Count",
+          "metricQueryType": 0,
+          "namespace": "AWS/ApplicationELB",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "B",
+          "region": "$region",
+          "statistic": "Sum"
+        },
+        {
+          "datasource": {
+            "type": "cloudwatch",
+            "uid": "cloudwatch"
+          },
+          "dimensions": {
+            "LoadBalancer": "$alb_lb"
+          },
+          "label": "TargetResponseTime",
+          "matchExact": false,
+          "metricEditorMode": 0,
+          "metricName": "TargetResponseTime",
+          "metricQueryType": 0,
+          "namespace": "AWS/ApplicationELB",
+          "period": "$cw_period",
+          "queryMode": "Metrics",
+          "refId": "C",
+          "region": "$region",
+          "statistic": "Average"
+        }
+      ],
+      "title": "ALB Request / 5xx / Target Response Time",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "s"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 17
+      },
+      "id": 10,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "histogram_quantile(0.95, sum by (le, namespace, ingress) (rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress=~\"$ingress\"}[5m])))",
+          "legendFormat": "{{ namespace }}/{{ ingress }} p95",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Ingress p95 Latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -51,10 +1028,10 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 0,
-        "y": 0,
+        "h": 4,
         "w": 4,
-        "h": 4
+        "x": 0,
+        "y": 25
       },
       "id": 1,
       "options": {
@@ -62,6 +1039,7 @@
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -69,8 +1047,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value"
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
+      "pluginVersion": "11.2.1",
       "targets": [
         {
           "datasource": {
@@ -97,17 +1078,13 @@
           "color": {
             "mode": "palette-classic"
           },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -116,10 +1093,10 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 4,
-        "y": 0,
+        "h": 4,
         "w": 4,
-        "h": 4
+        "x": 4,
+        "y": 25
       },
       "id": 2,
       "options": {
@@ -127,6 +1104,7 @@
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -134,8 +1112,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value"
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
+      "pluginVersion": "11.2.1",
       "targets": [
         {
           "datasource": {
@@ -162,17 +1143,13 @@
           "color": {
             "mode": "palette-classic"
           },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -181,10 +1158,10 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 8,
-        "y": 0,
+        "h": 4,
         "w": 4,
-        "h": 4
+        "x": 8,
+        "y": 25
       },
       "id": 3,
       "options": {
@@ -192,6 +1169,7 @@
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -199,8 +1177,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value"
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
+      "pluginVersion": "11.2.1",
       "targets": [
         {
           "datasource": {
@@ -227,17 +1208,13 @@
           "color": {
             "mode": "palette-classic"
           },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -246,10 +1223,10 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 12,
-        "y": 0,
+        "h": 4,
         "w": 4,
-        "h": 4
+        "x": 12,
+        "y": 25
       },
       "id": 4,
       "options": {
@@ -257,6 +1234,7 @@
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -264,8 +1242,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value"
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
+      "pluginVersion": "11.2.1",
       "targets": [
         {
           "datasource": {
@@ -292,17 +1273,13 @@
           "color": {
             "mode": "palette-classic"
           },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -311,10 +1288,10 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 16,
-        "y": 0,
+        "h": 4,
         "w": 4,
-        "h": 4
+        "x": 16,
+        "y": 25
       },
       "id": 5,
       "options": {
@@ -322,6 +1299,7 @@
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -329,8 +1307,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value"
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
+      "pluginVersion": "11.2.1",
       "targets": [
         {
           "datasource": {
@@ -338,7 +1319,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(order_hot_product_status_5xx_total{testid=~\"$testid\"}[$__rate_interval]))",
+          "expr": "sum(rate(k6_order_hot_product_status_5xx_total{testid=~\"$testid\"}[$__rate_interval]))",
           "legendFormat": "Hot Order 5xx / s",
           "range": true,
           "refId": "A"
@@ -357,17 +1338,13 @@
           "color": {
             "mode": "palette-classic"
           },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -376,10 +1353,10 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 20,
-        "y": 0,
+        "h": 4,
         "w": 4,
-        "h": 4
+        "x": 20,
+        "y": 25
       },
       "id": 6,
       "options": {
@@ -387,6 +1364,7 @@
         "graphMode": "area",
         "justifyMode": "center",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
             "lastNotNull"
@@ -394,8 +1372,11 @@
           "fields": "",
           "values": false
         },
-        "textMode": "value"
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
       },
+      "pluginVersion": "11.2.1",
       "targets": [
         {
           "datasource": {
@@ -403,7 +1384,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(order_hot_product_status_503_total{testid=~\"$testid\"}[$__rate_interval]))",
+          "expr": "sum(rate(k6_order_hot_product_status_503_total{testid=~\"$testid\"}[$__rate_interval]))",
           "legendFormat": "Hot Order 503 / s",
           "range": true,
           "refId": "A"
@@ -423,16 +1404,45 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
-            "lineWidth": 2
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -441,10 +1451,10 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 0,
-        "y": 4,
+        "h": 8,
         "w": 12,
-        "h": 8
+        "x": 0,
+        "y": 29
       },
       "id": 7,
       "options": {
@@ -468,7 +1478,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(order_hot_product_status_201_total{testid=~\"$testid\"}[$__rate_interval]))",
+          "expr": "sum(rate(k6_order_hot_product_status_201_total{testid=~\"$testid\"}[$__rate_interval]))",
           "legendFormat": "201 success",
           "range": true,
           "refId": "A"
@@ -479,7 +1489,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(order_hot_product_status_409_total{testid=~\"$testid\"}[$__rate_interval]))",
+          "expr": "sum(rate(k6_order_hot_product_status_409_total{testid=~\"$testid\"}[$__rate_interval]))",
           "legendFormat": "409 stock conflict",
           "range": true,
           "refId": "B"
@@ -490,7 +1500,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(order_hot_product_status_503_total{testid=~\"$testid\"}[$__rate_interval]))",
+          "expr": "sum(rate(k6_order_hot_product_status_503_total{testid=~\"$testid\"}[$__rate_interval]))",
           "legendFormat": "503 dependency unavailable",
           "range": true,
           "refId": "C"
@@ -501,7 +1511,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(order_hot_product_status_5xx_total{testid=~\"$testid\"}[$__rate_interval]))",
+          "expr": "sum(rate(k6_order_hot_product_status_5xx_total{testid=~\"$testid\"}[$__rate_interval]))",
           "legendFormat": "5xx server error",
           "range": true,
           "refId": "D"
@@ -512,7 +1522,7 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "sum(rate(order_hot_product_status_other_total{testid=~\"$testid\"}[$__rate_interval]))",
+          "expr": "sum(rate(k6_order_hot_product_status_other_total{testid=~\"$testid\"}[$__rate_interval]))",
           "legendFormat": "other",
           "range": true,
           "refId": "E"
@@ -532,16 +1542,45 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
-            "lineWidth": 2
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -550,10 +1589,10 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 12,
-        "y": 4,
+        "h": 8,
         "w": 12,
-        "h": 8
+        "x": 12,
+        "y": 29
       },
       "id": 8,
       "options": {
@@ -630,16 +1669,45 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
-            "lineWidth": 2
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -648,10 +1716,10 @@
         "overrides": []
       },
       "gridPos": {
+        "h": 8,
+        "w": 8,
         "x": 0,
-        "y": 12,
-        "w": 12,
-        "h": 8
+        "y": 37
       },
       "id": 9,
       "options": {
@@ -695,81 +1763,45 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
-            "lineWidth": 2
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "s"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 12,
-        "w": 12,
-        "h": 8
-      },
-      "id": 10,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "histogram_quantile(0.95, sum by (le, namespace, ingress) (rate(nginx_ingress_controller_request_duration_seconds_bucket{ingress=~\"$ingress\"}[5m])))",
-          "legendFormat": "{{ namespace }}/{{ ingress }} p95",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Ingress p95 Latency",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -778,12 +1810,12 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 0,
-        "y": 20,
-        "w": 12,
-        "h": 8
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 37
       },
-      "id": 11,
+      "id": 14,
       "options": {
         "legend": {
           "calcs": [
@@ -805,35 +1837,13 @@
             "uid": "prometheus"
           },
           "editorMode": "code",
-          "expr": "kube_horizontalpodautoscaler_status_current_replicas{namespace=\"$namespace\",horizontalpodautoscaler=~\"order-hpa|product-hpa\"}",
-          "legendFormat": "{{ horizontalpodautoscaler }} current",
+          "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\",pod=~\"order-deploy.*|product-deploy.*\"}[5m]))",
+          "legendFormat": "{{ pod }} restarts / 5m",
           "range": true,
           "refId": "A"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "kube_horizontalpodautoscaler_status_desired_replicas{namespace=\"$namespace\",horizontalpodautoscaler=~\"order-hpa|product-hpa\"}",
-          "legendFormat": "{{ horizontalpodautoscaler }} desired",
-          "range": true,
-          "refId": "B"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "kube_horizontalpodautoscaler_spec_max_replicas{namespace=\"$namespace\",horizontalpodautoscaler=~\"order-hpa|product-hpa\"}",
-          "legendFormat": "{{ horizontalpodautoscaler }} max",
-          "range": true,
-          "refId": "C"
         }
       ],
-      "title": "Order/Product HPA Replicas",
+      "title": "Pod Restarts",
       "type": "timeseries"
     },
     {
@@ -847,81 +1857,45 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
-            "lineWidth": 2
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "percentunit"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 20,
-        "w": 12,
-        "h": 8
-      },
-      "id": 12,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum by (pod) (rate(container_cpu_usage_seconds_total{namespace=\"$namespace\",pod=~\"order-deploy.*|product-deploy.*\",container!=\"\",image!=\"\"}[2m])) / sum by (pod) (kube_pod_container_resource_requests{namespace=\"$namespace\",pod=~\"order-deploy.*|product-deploy.*\",resource=\"cpu\"})",
-          "legendFormat": "{{ pod }}",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Order/Product Pod CPU Usage / Request",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -930,10 +1904,10 @@
         "overrides": []
       },
       "gridPos": {
-        "x": 0,
-        "y": 28,
-        "w": 12,
-        "h": 8
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 37
       },
       "id": 13,
       "options": {
@@ -979,71 +1953,6 @@
     },
     {
       "datasource": {
-        "type": "prometheus",
-        "uid": "prometheus"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 28,
-        "w": 12,
-        "h": 8
-      },
-      "id": 14,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "prometheus"
-          },
-          "editorMode": "code",
-          "expr": "sum by (pod) (increase(kube_pod_container_status_restarts_total{namespace=\"$namespace\",pod=~\"order-deploy.*|product-deploy.*\"}[5m]))",
-          "legendFormat": "{{ pod }} restarts / 5m",
-          "range": true,
-          "refId": "A"
-        }
-      ],
-      "title": "Pod Restarts",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
         "type": "cloudwatch",
         "uid": "cloudwatch"
       },
@@ -1053,16 +1962,45 @@
             "mode": "palette-classic"
           },
           "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 10,
-            "lineWidth": 2
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
           },
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "green"
+                "color": "green",
+                "value": null
               }
             ]
           },
@@ -1071,570 +2009,10 @@
         "overrides": []
       },
       "gridPos": {
+        "h": 8,
+        "w": 12,
         "x": 0,
-        "y": 36,
-        "w": 12,
-        "h": 8
-      },
-      "id": 15,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "LoadBalancer": "$alb_lb"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "RequestCount",
-          "metricQueryType": 0,
-          "namespace": "AWS/ApplicationELB",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "A",
-          "region": "$region",
-          "statistic": "Sum",
-          "label": "RequestCount"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "LoadBalancer": "$alb_lb"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "HTTPCode_ELB_5XX_Count",
-          "metricQueryType": 0,
-          "namespace": "AWS/ApplicationELB",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "B",
-          "region": "$region",
-          "statistic": "Sum",
-          "label": "ELB 5xx"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "LoadBalancer": "$alb_lb"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "TargetResponseTime",
-          "metricQueryType": 0,
-          "namespace": "AWS/ApplicationELB",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "C",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "TargetResponseTime"
-        }
-      ],
-      "title": "ALB Request / 5xx / Target Response Time",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "cloudwatch",
-        "uid": "cloudwatch"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 36,
-        "w": 12,
-        "h": 8
-      },
-      "id": 16,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "DBInstanceIdentifier": "$db_id"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "CPUUtilization",
-          "metricQueryType": 0,
-          "namespace": "AWS/RDS",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "A",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "CPUUtilization"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "DBInstanceIdentifier": "$db_id"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "DatabaseConnections",
-          "metricQueryType": 0,
-          "namespace": "AWS/RDS",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "B",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "DatabaseConnections"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "DBInstanceIdentifier": "$db_id"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "DBLoad",
-          "metricQueryType": 0,
-          "namespace": "AWS/RDS",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "C",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "DBLoad"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "DBInstanceIdentifier": "$db_id"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "DBLoadNonCPU",
-          "metricQueryType": 0,
-          "namespace": "AWS/RDS",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "D",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "DBLoadNonCPU"
-        }
-      ],
-      "title": "RDS Load / Connections",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "cloudwatch",
-        "uid": "cloudwatch"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 44,
-        "w": 12,
-        "h": 8
-      },
-      "id": 17,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "CacheClusterId": "$redis_cluster"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "EngineCPUUtilization",
-          "metricQueryType": 0,
-          "namespace": "AWS/ElastiCache",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "A",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "EngineCPUUtilization"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "CacheClusterId": "$redis_cluster"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "CPUUtilization",
-          "metricQueryType": 0,
-          "namespace": "AWS/ElastiCache",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "B",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "CPUUtilization"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "CacheClusterId": "$redis_cluster"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "CurrConnections",
-          "metricQueryType": 0,
-          "namespace": "AWS/ElastiCache",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "C",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "CurrConnections"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "CacheClusterId": "$redis_cluster"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "NewConnections",
-          "metricQueryType": 0,
-          "namespace": "AWS/ElastiCache",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "D",
-          "region": "$region",
-          "statistic": "Sum",
-          "label": "NewConnections"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "CacheClusterId": "$redis_cluster"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "Evictions",
-          "metricQueryType": 0,
-          "namespace": "AWS/ElastiCache",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "E",
-          "region": "$region",
-          "statistic": "Sum",
-          "label": "Evictions"
-        }
-      ],
-      "title": "ElastiCache Redis Saturation",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "cloudwatch",
-        "uid": "cloudwatch"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 12,
-        "y": 44,
-        "w": 12,
-        "h": 8
-      },
-      "id": 18,
-      "options": {
-        "legend": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "displayMode": "table",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "multi",
-          "sort": "none"
-        }
-      },
-      "targets": [
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "QueueName": "$stock_deduct_queue"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "ApproximateNumberOfMessagesVisible",
-          "metricQueryType": 0,
-          "namespace": "AWS/SQS",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "A",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "Visible"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "QueueName": "$stock_deduct_queue"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "ApproximateNumberOfMessagesNotVisible",
-          "metricQueryType": 0,
-          "namespace": "AWS/SQS",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "B",
-          "region": "$region",
-          "statistic": "Average",
-          "label": "NotVisible"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "QueueName": "$stock_deduct_queue"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "ApproximateAgeOfOldestMessage",
-          "metricQueryType": 0,
-          "namespace": "AWS/SQS",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "C",
-          "region": "$region",
-          "statistic": "Maximum",
-          "label": "OldestAge"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "QueueName": "$stock_deduct_queue"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "NumberOfMessagesSent",
-          "metricQueryType": 0,
-          "namespace": "AWS/SQS",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "D",
-          "region": "$region",
-          "statistic": "Sum",
-          "label": "Sent"
-        },
-        {
-          "datasource": {
-            "type": "cloudwatch",
-            "uid": "cloudwatch"
-          },
-          "dimensions": {
-            "QueueName": "$stock_deduct_queue"
-          },
-          "matchExact": false,
-          "metricEditorMode": 0,
-          "metricName": "NumberOfMessagesDeleted",
-          "metricQueryType": 0,
-          "namespace": "AWS/SQS",
-          "period": "$cw_period",
-          "queryMode": "Metrics",
-          "refId": "E",
-          "region": "$region",
-          "statistic": "Sum",
-          "label": "Deleted"
-        }
-      ],
-      "title": "SQS Stock Deduct Queue",
-      "type": "timeseries"
-    },
-    {
-      "datasource": {
-        "type": "cloudwatch",
-        "uid": "cloudwatch"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "drawStyle": "line",
-            "fillOpacity": 10,
-            "lineWidth": 2
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green"
-              }
-            ]
-          },
-          "unit": "short"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "x": 0,
-        "y": 52,
-        "w": 12,
-        "h": 8
+        "y": 45
       },
       "id": 19,
       "options": {
@@ -1661,6 +2039,7 @@
           "dimensions": {
             "QueueName": "$stock_result_queue"
           },
+          "label": "stock-result visible",
           "matchExact": false,
           "metricEditorMode": 0,
           "metricName": "ApproximateNumberOfMessagesVisible",
@@ -1670,8 +2049,7 @@
           "queryMode": "Metrics",
           "refId": "A",
           "region": "$region",
-          "statistic": "Average",
-          "label": "stock-result visible"
+          "statistic": "Average"
         },
         {
           "datasource": {
@@ -1681,6 +2059,7 @@
           "dimensions": {
             "QueueName": "$stock_result_queue"
           },
+          "label": "stock-result oldest age",
           "matchExact": false,
           "metricEditorMode": 0,
           "metricName": "ApproximateAgeOfOldestMessage",
@@ -1690,8 +2069,7 @@
           "queryMode": "Metrics",
           "refId": "B",
           "region": "$region",
-          "statistic": "Maximum",
-          "label": "stock-result oldest age"
+          "statistic": "Maximum"
         },
         {
           "datasource": {
@@ -1701,6 +2079,7 @@
           "dimensions": {
             "QueueName": "$notify_queue"
           },
+          "label": "notify visible",
           "matchExact": false,
           "metricEditorMode": 0,
           "metricName": "ApproximateNumberOfMessagesVisible",
@@ -1710,8 +2089,7 @@
           "queryMode": "Metrics",
           "refId": "C",
           "region": "$region",
-          "statistic": "Average",
-          "label": "notify visible"
+          "statistic": "Average"
         },
         {
           "datasource": {
@@ -1721,6 +2099,7 @@
           "dimensions": {
             "QueueName": "$notify_queue"
           },
+          "label": "notify oldest age",
           "matchExact": false,
           "metricEditorMode": 0,
           "metricName": "ApproximateAgeOfOldestMessage",
@@ -1730,8 +2109,7 @@
           "queryMode": "Metrics",
           "refId": "D",
           "region": "$region",
-          "statistic": "Maximum",
-          "label": "notify oldest age"
+          "statistic": "Maximum"
         }
       ],
       "title": "SQS Stock Result / Notify Queues",
@@ -1743,10 +2121,10 @@
         "uid": "loki"
       },
       "gridPos": {
-        "x": 12,
-        "y": 52,
+        "h": 8,
         "w": 12,
-        "h": 8
+        "x": 12,
+        "y": 45
       },
       "id": 20,
       "options": {
@@ -1773,11 +2151,638 @@
       ],
       "title": "Order/Product Error Logs",
       "type": "logs"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 53
+      },
+      "id": 21,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (namespace) (kube_pod_status_phase{namespace=\"$namespace\",phase=\"Pending\"})",
+          "legendFormat": "{{ namespace }} pending",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (namespace) (kube_pod_status_unschedulable{namespace=\"$namespace\"})",
+          "legendFormat": "{{ namespace }} unschedulable",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Karpenter Pending / Unschedulable Pods",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 53
+      },
+      "id": 22,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "max(karpenter_scheduler_queue_depth)",
+          "legendFormat": "queue depth",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Karpenter Scheduler Queue Depth",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 53
+      },
+      "id": 23,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (nodepool) (increase(karpenter_nodeclaims_created_total{nodepool=~\"$nodepool\"}[5m]))",
+          "legendFormat": "{{ nodepool }} nodeclaims",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (nodepool) (increase(karpenter_nodes_created_total{nodepool=~\"$nodepool\"}[5m]))",
+          "legendFormat": "{{ nodepool }} nodes",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Karpenter Capacity Created / 5m",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 61
+      },
+      "id": 24,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "max by (nodepool, resource_type, resource) (100 * karpenter_nodepools_usage{nodepool=~\"$nodepool\"} / karpenter_nodepools_limit{nodepool=~\"$nodepool\"})",
+          "legendFormat": "{{ nodepool }} {{ resource_type }}{{ resource }}",
+          "range": true,
+          "refId": "A"
+        }
+      ],
+      "title": "Karpenter NodePool Usage / Limit",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "ops"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 12,
+        "y": 61
+      },
+      "id": 25,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum by (controller, method) (rate(karpenter_cloudprovider_errors_total[5m]))",
+          "legendFormat": "{{ controller }} {{ method }} errors",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "sum(rate(aws_sdk_go_request_retry_count[5m]))",
+          "legendFormat": "aws sdk retries",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Karpenter Cloud Provider Errors / Retries",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prometheus"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 69
+      },
+      "id": 26,
+      "options": {
+        "legend": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "displayMode": "table",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "targets": [
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count(up{job=\"karpenter\"} == 1)",
+          "legendFormat": "karpenter scrape targets up",
+          "range": true,
+          "refId": "A"
+        },
+        {
+          "datasource": {
+            "type": "prometheus",
+            "uid": "prometheus"
+          },
+          "editorMode": "code",
+          "expr": "count(up{job=\"karpenter\"} == 0)",
+          "legendFormat": "karpenter scrape targets down",
+          "range": true,
+          "refId": "B"
+        }
+      ],
+      "title": "Karpenter Controller Health",
+      "type": "timeseries"
     }
   ],
-  "refresh": "10s",
+  "refresh": "5s",
   "schemaVersion": 39,
-  "style": "dark",
   "tags": [
     "sallijang",
     "k6",
@@ -1788,7 +2793,7 @@
     "list": [
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "ap-northeast-2",
           "value": "ap-northeast-2"
         },
@@ -1812,7 +2817,7 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "30",
           "value": "30"
         },
@@ -1844,7 +2849,7 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "default",
           "value": "default"
         },
@@ -1854,7 +2859,13 @@
         "label": "Namespace",
         "multi": false,
         "name": "namespace",
-        "options": [],
+        "options": [
+          {
+            "selected": true,
+            "text": "default",
+            "value": "default"
+          }
+        ],
         "query": "default",
         "refresh": 1,
         "regex": "",
@@ -1863,10 +2874,39 @@
         "type": "custom"
       },
       {
+        "allValue": ".*",
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "All",
-          "value": ".*"
+          "value": "$__all"
+        },
+        "datasource": {
+          "type": "prometheus",
+          "uid": "prometheus"
+        },
+        "definition": "label_values(karpenter_nodepools_usage, nodepool)",
+        "hide": 0,
+        "includeAll": true,
+        "label": "NodePool",
+        "multi": false,
+        "name": "nodepool",
+        "options": [],
+        "query": {
+          "query": "label_values(karpenter_nodepools_usage, nodepool)",
+          "refId": "PrometheusVariableQueryEditor-VariableQuery"
+        },
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": ".*",
+        "current": {
+          "selected": false,
+          "text": "All",
+          "value": "$__all"
         },
         "datasource": {
           "type": "prometheus",
@@ -1875,7 +2915,6 @@
         "definition": "label_values(k6_iterations_total, testid)",
         "hide": 0,
         "includeAll": true,
-        "allValue": ".*",
         "label": "k6 Test ID",
         "multi": false,
         "name": "testid",
@@ -1891,10 +2930,11 @@
         "type": "query"
       },
       {
+        "allValue": ".*",
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "All",
-          "value": ".*"
+          "value": "$__all"
         },
         "datasource": {
           "type": "prometheus",
@@ -1903,7 +2943,6 @@
         "definition": "label_values(nginx_ingress_controller_requests, ingress)",
         "hide": 0,
         "includeAll": true,
-        "allValue": ".*",
         "label": "Ingress",
         "multi": false,
         "name": "ingress",
@@ -1920,7 +2959,7 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "pickup-prod-rds",
           "value": "pickup-prod-rds"
         },
@@ -1944,7 +2983,7 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "app/pickup-prod-alb/1fd67e88c3b89a03",
           "value": "app/pickup-prod-alb/1fd67e88c3b89a03"
         },
@@ -1968,7 +3007,7 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "pickup-prod-redis-001",
           "value": "pickup-prod-redis-001"
         },
@@ -1992,7 +3031,7 @@
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "pickup-prod-stock-deduct",
           "value": "pickup-prod-stock-deduct"
         },
@@ -2001,14 +3040,20 @@
         "label": "Stock Deduct Queue",
         "multi": false,
         "name": "stock_deduct_queue",
-        "options": [],
+        "options": [
+          {
+            "selected": true,
+            "text": "pickup-prod-stock-deduct",
+            "value": "pickup-prod-stock-deduct"
+          }
+        ],
         "query": "pickup-prod-stock-deduct",
         "skipUrlSync": false,
         "type": "custom"
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "pickup-prod-stock-result",
           "value": "pickup-prod-stock-result"
         },
@@ -2017,14 +3062,20 @@
         "label": "Stock Result Queue",
         "multi": false,
         "name": "stock_result_queue",
-        "options": [],
+        "options": [
+          {
+            "selected": true,
+            "text": "pickup-prod-stock-result",
+            "value": "pickup-prod-stock-result"
+          }
+        ],
         "query": "pickup-prod-stock-result",
         "skipUrlSync": false,
         "type": "custom"
       },
       {
         "current": {
-          "selected": true,
+          "selected": false,
           "text": "pickup-prod-reservation",
           "value": "pickup-prod-reservation"
         },
@@ -2033,7 +3084,13 @@
         "label": "Notify Queue",
         "multi": false,
         "name": "notify_queue",
-        "options": [],
+        "options": [
+          {
+            "selected": true,
+            "text": "pickup-prod-reservation",
+            "value": "pickup-prod-reservation"
+          }
+        ],
         "query": "pickup-prod-reservation",
         "skipUrlSync": false,
         "type": "custom"
@@ -2041,13 +3098,13 @@
     ]
   },
   "time": {
-    "from": "now-2h",
+    "from": "now-10m",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Sallijang Hot Product Reservation Load",
   "uid": "sallijang-hot-product-reservation-load",
-  "version": 1,
+  "version": 5,
   "weekStart": ""
 }
