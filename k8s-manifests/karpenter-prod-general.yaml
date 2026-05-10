@@ -88,5 +88,5 @@ spec:
     memory: 32Gi
 
   disruption:
-    consolidationPolicy: WhenEmpty
-    consolidateAfter: 10m
+    consolidationPolicy: WhenEmptyOrUnderutilized
+    consolidateAfter: 5m
