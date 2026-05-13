@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(terraform validate *)",
-      "Bash(terraform init *)"
-    ]
-  }
-}
